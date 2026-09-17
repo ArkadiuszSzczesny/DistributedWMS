@@ -1,1 +1,8 @@
-<Solution />
+<Solution>
+  <Project Path="src/DistributedWMS.Application/DistributedWMS.Application.csproj" />
+  <Project Path="src/DistributedWMS.Client/DistributedWMS.Client.csproj" />
+  <Project Path="src/DistributedWMS.Domain/DistributedWMS.Domain.csproj" />
+  <Project Path="src/DistributedWMS.Infrastructure/DistributedWMS.Infrastructure.csproj" />
+  <Project Path="src/DistributedWMS.Shared/DistributedWMS.Shared.csproj" />
+  <Project Path="src/DistributedWMS.WebApi/DistributedWMS.WebApi.csproj" />
+</Solution>

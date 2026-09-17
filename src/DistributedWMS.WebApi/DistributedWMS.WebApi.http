@@ -1,0 +1,6 @@
+@DistributedWMS.WebApi_HostAddress = http://localhost:5181
+
+GET {{DistributedWMS.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
