@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: wms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: distributedwms
+      POSTGRES_USER: wms
+      POSTGRES_PASSWORD: Wms123!
+      TZ: Europe/Warsaw
+    ports:
+      - "5432:5432"
+    volumes:
+      - wms-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wms -d distributedwms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: wms-pgadmin
+    restart: unless-stopped
+    user: root
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@wms.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - wms-pgadmin:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  wms-data:
+  wms-pgadmin:
