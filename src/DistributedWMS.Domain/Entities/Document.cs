@@ -47,7 +47,7 @@ public class Document : EntityBase
 
     public DateTime DocumentDate { get; private set; }
 
-    public DateTime? PostedAtutc { get; private set; }
+    public DateTime? PostedAtUtc { get; private set; }
 
     ///<summary>Lokalizacja źródłowa - rozchód. Pusta dla przyjęcia zewnętrznego.</summary>
     public Guid? SourceLocationId { get; private set; }
@@ -105,7 +105,7 @@ public class Document : EntityBase
             throw new DomainException("Nie można zatwierdzić dokumentu bez pozycji.");
 
         Status = DocumentStatus.Posted;
-        PostedAtutc = DateTime.UtcNow;
+        PostedAtUtc = DateTime.UtcNow;
         ModifiedAtUtc = DateTime.UtcNow;
     }   
 

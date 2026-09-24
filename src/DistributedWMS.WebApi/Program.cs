@@ -1,4 +1,11 @@
+using DistributedWMS.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString = builder.Configuration.GetConnectionString("WmsDb")
+    ?? throw new InvalidOperationException("Brak connection stringa 'WmsDb' w konfiguracji.");
+
+builder.Services.AddInfrastructure(connectionString);
 
 // Add services to the container.
 
