@@ -1,4 +1,5 @@
-﻿using DistributedWMS.Infrastructure.Persistance;
+﻿using DistributedWMS.Application.Common.Interfaces;
+using DistributedWMS.Infrastructure.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +15,8 @@ public static class DepencencyInjection
     {
         services.AddDbContext<WmsDbContext>(options =>
             options.UseNpgsql( connectionString));
+
+        services.AddScoped<IWmsDbContext>(sp => sp.GetRequiredService<WmsDbContext>());
 
         return services;
     }

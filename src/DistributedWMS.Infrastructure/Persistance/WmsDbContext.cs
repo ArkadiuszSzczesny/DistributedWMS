@@ -1,5 +1,7 @@
 ﻿using DistributedWMS.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using DistributedWMS.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DistributedWMS.Infrastructure.Persistance;
 
@@ -7,7 +9,7 @@ namespace DistributedWMS.Infrastructure.Persistance;
 ///Kontekst bazy danych systemu. Konfiguracje poszczególnych encji
 ///znajdują się w osobnych klasach w folderze Configurations.
 /// </summary>
-public class WmsDbContext : DbContext
+public class WmsDbContext : DbContext, IWmsDbContext
 {
     public WmsDbContext(DbContextOptions<WmsDbContext> options) : base(options) { }
 
@@ -17,6 +19,9 @@ public class WmsDbContext : DbContext
     public DbSet<StockItem> StockItems => Set<StockItem>();
     public DbSet<Document> Documents => Set<Document>();
     public DbSet<DocumentLine> DocumentLines => Set<DocumentLine>();
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+        => Database.BeginTransactionAsync(cancellationToken);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
