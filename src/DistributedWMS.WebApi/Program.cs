@@ -1,5 +1,8 @@
 using DistributedWMS.Infrastructure;
 using DistributedWMS.Application;
+using DistributedWMS.Infrastructure.Persistance;
+using Microsoft.EntityFrameworkCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +20,14 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// Zastosowanie migracji oraz zasilenie bazy danymi początkowymi.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<WmsDbContext>();
+    await db.Database.MigrateAsync();
+    await DatabaseSeeder.SeedAsync(db);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
