@@ -56,15 +56,15 @@ public class DocumentService : IDocumentService
     public async Task<DocumentDetailsDto> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var document = await LoadFullAsync(id, tracking: false, ct);
-        return MapDetailsAsync(document);
+        return await MapDetailsAsync(document.Id, ct);
     }
 
     // ------ modyfikacja dokumentu roboczego ------
 
     public async Task<DocumentDetailsDto> CreateAsync(CreateDocumentRequest request, CancellationToken ct = default)
     {
-        if (!Enum.TryParse<DocumentType>(request.Type, true, out var type))
-            throw new DomainException($"Nieznany typ dokumentu: {request.Type}");
+        if (!Enum.TryParse<DocumentType>(request.DocumentType, true, out var type))
+            throw new DomainException($"Nieznany typ dokumentu: {request.DocumentType}");
 
         await EnsureUserExistsAsync(request.CreatedByUserId, ct);
         await EnsureLocationExistsAsync(request.SourceLocationId, ct);
@@ -85,7 +85,7 @@ public class DocumentService : IDocumentService
         _db.Documents.Add(document);
         await _db.SaveChangesAsync(ct);
 
-        return MapDetailsAsync(await LoadFullAsync(document.Id, tracking: false, ct));
+        return await MapDetailsAsync(document.Id, ct);
     }
 
     public async Task<DocumentDetailsDto> AddLineAsync(
@@ -93,14 +93,14 @@ public class DocumentService : IDocumentService
     {
         var document = await LoadFullAsync(documentId, tracking: true, ct);
 
-        var productExists = await _db.Products.AnyAsync(p => p.Id == request.ProductId, ct);
+        var productExists = await _db.Products.AnyAsync(p => p.Id == request.ProductId && p.IsActive, ct);
         if (!productExists)
             throw new NotFoundException("Towar", request.ProductId);
 
         document.AddLine(request.ProductId, request.Quantity, request.UnitPrice);
         await _db.SaveChangesAsync(ct);
 
-        return MapDetailsAsync(await LoadFullAsync(documentId, tracking: false, ct));
+        return await MapDetailsAsync(documentId, ct);
     }
 
     public async Task<DocumentDetailsDto> RemoveLineAsync(
@@ -111,7 +111,7 @@ public class DocumentService : IDocumentService
         document.RemoveLine(lineId);
         await _db.SaveChangesAsync(ct);
 
-        return MapDetailsAsync(await LoadFullAsync(documentId, tracking: false, ct));
+        return await MapDetailsAsync(documentId, ct);
     }
 
     public async Task DeleteDraftAsync(Guid documentId, CancellationToken ct = default)
@@ -187,7 +187,7 @@ public class DocumentService : IDocumentService
             throw;
         }
 
-        return MapDetailsAsync(await LoadFullAsync(documentId, tracking: false, ct));
+        return await MapDetailsAsync(documentId, ct);
     }
 
     // ------ operacje na stanach ------
@@ -272,39 +272,65 @@ public class DocumentService : IDocumentService
             throw new NotFoundException("Lokalizacja", locationId);
     }
 
-    private DocumentDetailsDto MapDetailsAsync(Document d)
+    /// <summary>
+    /// Buduje pełną reprezentację dokumentu. Dane pozycji pobierane są
+    /// pojedynczmy zapytaniem ze złączeniem kartoteki towarowej.
+    /// </summary>
+    private async Task<DocumentDetailsDto> MapDetailsAsync(Guid documentId, CancellationToken ct)
     {
-        var products = _db.Products.AsNoTracking().ToDictionary(p => p.Id);
+        var header = await _db.Documents
+            .AsNoTracking()
+            .Where(d => d.Id == documentId)
+            .Select(d => new
+            {
+                d.Id,
+                d.Number,
+                d.Type,
+                d.Status,
+                d.DocumentDate,
+                d.PostedAtUtc,
+                d.SourceLocationId,
+                SourceCode = d.SourceLocation != null ? d.SourceLocation.Code : null,
+                d.TargetLocationId,
+                TargetCode = d.TargetLocation != null ? d.TargetLocation.Code : null,
+                UserName = d.CreatedByUser.FullName,
+                d.Reference,
+                d.Notes
+            })
+            .FirstOrDefaultAsync(ct);
 
-        var lines = d.Lines
+        if (header is null)
+            throw new NotFoundException("Dokument", documentId);
+
+        var lines = await _db.DocumentLines
+            .AsNoTracking()
+            .Where(l => l.DocumentId == documentId)
+            .OrderBy(l => l.Product.Sku)
             .Select(l => new DocumentLineDto(
                 l.Id,
                 l.ProductId,
-                products.TryGetValue(l.ProductId, out var p) ? p.Sku : string.Empty,
-                p2(l.ProductId, products),
-                products.TryGetValue(l.ProductId, out var p3) ? p3.UnitOfMeasure : string.Empty,
+                l.Product.Sku,
+                l.Product.Name,
+                l.Product.UnitOfMeasure,
                 l.Quantity,
                 l.UnitPrice))
-            .ToList();
+            .ToListAsync(ct);
 
         return new DocumentDetailsDto(
-            d.Id,
-            d.Number,
-            d.Type.ToString(),
-            d.Status.ToString(),
-            d.DocumentDate,
-            d.PostedAtUtc,
-            d.SourceLocationId,
-            d.SourceLocation?.Code,
-            d.TargetLocationId,
-            d.TargetLocation?.Code,
-            d.CreatedByUser?.FullName ?? string.Empty,
-            d.Reference,
-            d.Notes,
-            d.IsEditable,
+            header.Id,
+            header.Number,
+            header.Type.ToString(),
+            header.Status.ToString(),
+            header.DocumentDate,
+            header.PostedAtUtc,
+            header.SourceLocationId,
+            header.SourceCode,
+            header.TargetLocationId,
+            header.TargetCode,
+            header.UserName,
+            header.Reference,
+            header.Notes,
+            header.Status == DocumentStatus.Draft,
             lines);
-
-        static string p2(Guid id, Dictionary<Guid, Product> dict)
-            => dict.TryGetValue(id, out var prod) ? prod.Name : string.Empty;
     }
 }

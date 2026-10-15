@@ -26,7 +26,7 @@ public class Document : EntityBase
         if(string.IsNullOrWhiteSpace(number))
             throw new DomainException("Numer dokumentu nie może być pusty.");
         
-        number = number.Trim();
+        Number = number.Trim();
         Type = type;
         Status = DocumentStatus.Draft;
         CreatedByUserId = createdByUserId;

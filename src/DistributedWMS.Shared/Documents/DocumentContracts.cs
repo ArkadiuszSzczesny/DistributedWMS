@@ -41,7 +41,7 @@ public record DocumentDetailsDto(
     IReadOnlyList<DocumentLineDto> Lines);
 
 public record CreateDocumentRequest(
-    string Type,
+    string DocumentType,
     Guid? SourceLocationId,
     Guid? TargetLocationId,
     Guid CreatedByUserId,

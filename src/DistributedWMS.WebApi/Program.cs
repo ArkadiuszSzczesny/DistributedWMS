@@ -1,6 +1,8 @@
-using DistributedWMS.Infrastructure;
 using DistributedWMS.Application;
+using DistributedWMS.Infrastructure;
 using DistributedWMS.Infrastructure.Persistance;
+using DistributedWMS.WebApi.Common;
+using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -10,14 +12,22 @@ var connectionString = builder.Configuration.GetConnectionString("WmsDb")
     ?? throw new InvalidOperationException("Brak connection stringa 'WmsDb' w konfiguracji.");
 
 builder.Services.AddApplication();
-
 builder.Services.AddInfrastructure(connectionString);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+// Dostęp dla aplikacji klienckiej Blazor WebAssembly uruchamianej na innym porcie.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("BlazorClient", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 
 var app = builder.Build();
 
@@ -29,16 +39,20 @@ using (var scope = app.Services.CreateScope())
     await DatabaseSeeder.SeedAsync(db);
 }
 
-// Configure the HTTP request pipeline.
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.Title = "DistributedWMS API";
+        options.Theme = ScalarTheme.BluePlanet;
+    });
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
+app.UseCors("BlazorClient");
 app.MapControllers();
 
 app.Run();
