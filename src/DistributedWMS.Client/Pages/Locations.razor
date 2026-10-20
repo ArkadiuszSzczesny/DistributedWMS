@@ -1,0 +1,49 @@
+﻿@page "/locations"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Localizacje</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6">Lokalizacje magazynowe</MudText>
+
+<MudTable Items="_locations" Loading="_loading" Hover="true" Striped="true" Dense="true">
+    <HeaderContent>
+        <MudTh>Kod</MudTh>
+        <MudTh>Nazwa</MudTh>
+        <MudTh>Typ</MudTh>
+        <MudTh>Nr rejestracyjny</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Kod">@context.Code</MudTd>
+        <MudTd DataLabel="Nazwa">@context.Name</MudTd>
+        <MudTd DataLabel="Typ">
+            <MudChip T="string" Size="Size.Small"
+                     Color="@(context.Type == "MainWarehouse" ? Color.Primary : Color.Secondary)">
+               @(context.Type == "MainWarehouse" ? "Magazyn głowny" : "Magazyn mobilny")
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Nr rejestracyjny">@(context.VehicleRegistration ?? "-")</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private IReadOnlyList<LocationDto> _locations = Array.Empty<LocationDto>();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/locations")
+                         ?? new List<LocationDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Nie udało się pobrać lokalizacji: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

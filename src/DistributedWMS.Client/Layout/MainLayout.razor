@@ -1,16 +1,40 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-        <article class="content px-4">
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudText Typo="Typo.h6">DistributedWMS</MudText>
+        <MudSpacer />
+        <MydText Typo="Typobody2">System zarządzania gospodarką magazynową</MydText>
+    </MudAppBar>
+
+    <MudDrawer Open="true" Variant="DrawerVariant.Persistent" Elevation="1">
+        <MudNavMenu>
+            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+                Pulpit
+            </MudNavLink>
+            <MudNavLink Href="products" Icon="@Icons.Material.Filled.Inventory2">
+                Kartoteka towarów
+            </MudNavLink>
+            <MudNavLink Href="locations" Icon="@Icons.Material.Filled.Warehouse">
+                Lokalizacje
+            </MudNavLink>
+            <MudNavLink Href="stock" Icon="@Icons.Material.Filled.Checklist">
+                Stany magazynowe
+            </MudNavLink>
+            <MudNavLink Href="shortages" Icon="@Icons.Material.Filled.Warning">
+                Raport braków
+            </MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-6">
             @Body
-        </article>
-    </main>
-</div>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>

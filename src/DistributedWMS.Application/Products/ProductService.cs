@@ -42,13 +42,13 @@ public class ProductService : IProductService
 
     public async Task<ProductDto> CreateAsync(CreateProductRequest request, CancellationToken ct = default)
     {
-        var sku = request.sku.Trim().ToUpperInvariant();
+        var sku = request.Sku.Trim().ToUpperInvariant();
 
         var exists = await _db.Products.AnyAsync(p => p.Sku == sku, ct);
         if (exists)
             throw new DomainException($"Towar z kodem SKU '{sku}' już istnieje.");
 
-        var product = new Product(request.sku, request.Name, request.UnitOfMeasure, request.MinimumStock)
+        var product = new Product(request.Sku, request.Name, request.UnitOfMeasure, request.MinimumStock)
         {
             Description = request.Description
         };

@@ -1,0 +1,66 @@
+﻿@page "/products"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Kartoteka towarów</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6">Kartoteka towarów</MudText>
+
+<MudTable Items="_products" Loading="_loading" Hover="true" Striped="true"
+          Filter="FilterFunc" Dense="true">
+    <ToolBarContent>
+        <MudTextField @bind-Value="_search" Placeholder="Szukaj po indeksie lub nazwie"
+                    Adornment="Adornment.Start"
+                    AdornmentIcon="@Icons.Material.Filled.Search"
+                    IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Indeks</MudTh>
+        <MudTh>Nazwa</MudTh>
+        <MudTh>J.m.</MudTh>
+        <MudTh Style="text-align:right">Stan minimalny</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Indeks">@context.Sku</MudTd>
+        <MudTd DataLabel="Nazwa">@context.Name</MudTd>
+        <MudTd DataLabel="J.m.">@context.UnitOfMeasure</MudTd>
+        <MudTd DataLabel="Stan minimalny" Style="text-align:right">
+            @context.MinimumStock.ToString("N2")
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>Brak towarów w kartotece</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    private IReadOnlyList<ProductDto> _products = Array.Empty<ProductDto>();
+    private bool _loading = true;
+    private string _search = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _products = await Http.GetFromJsonAsync<List<ProductDto>>("api/products")
+                        ?? new List<ProductDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Nie udało się pobrać kartoteki: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private bool FilterFunc(ProductDto product)
+    {
+        if (string.IsNullOrWhiteSpace(_search))
+            return true;
+
+            return product.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                || product.Name.Contains(_search, StringComparison.OrdinalIgnoreCase);
+    }
+}

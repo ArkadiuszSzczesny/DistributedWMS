@@ -1,0 +1,61 @@
+﻿@page "/shortages"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Raport braków</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-2">Raport braków</MudText>
+<MudText Typo="Typo.body2" Class="mb-6">
+    Towary, których łączny stan we wszystkich lokalizacjach jest niższy od progu minimalnego.
+</MudText>
+
+<MudTable Items="_shortages" Loading="_loading" Hover="true" Striped="true" Dense="true">
+    <HeaderContent>
+        <MudTh>Indeks</MudTh>
+        <MudTh>Nazwa</MudTh>
+        <MudTh Style="text-align:right">Stan łączny</MudTh>
+        <MudTh Style="text-align:right">Stan minimalny</MudTh>
+        <MudTh Style="text-align:right">Niedobór</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Indeks">@context.Sku</MudTd>
+        <MudTd DataLabel="Nazwa">@context.ProductName</MudTd>
+        <MudTd DataLabel="Stan łączny" Style="text-align:right">
+            @context.TotalQuantity.ToString("N2") @context.UnitOfMeasure
+        </MudTd>
+        <MudTd DataLabel="Stan minimalny" Style="text-align:right">
+            @context.MinimumStock.ToString("N2")
+        </MudTd>
+        <MudTd DataLabel="Niedobór" Style="text-align:right">
+            <MudChip T="string" Color="Color.Error" Size="Size.Small">
+                @context.Shortage.ToString("N2")
+            </MudChip>
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>Wszystkie towary mają stan powyżej progu minimalnego.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    private IReadOnlyList<StockSummaryDto> _shortages = Array.Empty<StockSummaryDto>();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _shortages = await Http.GetFromJsonAsync<List<StockSummaryDto>>("api/stock/below-minimum")
+                         ?? new List<StockSummaryDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Nie udało się pobrać raportu: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}
+

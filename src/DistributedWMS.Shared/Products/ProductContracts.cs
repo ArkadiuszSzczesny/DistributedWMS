@@ -3,7 +3,7 @@
 /// <summary>Reprezentacja towaru przekazywana do klienta.</summary>
 public record ProductDto(
     Guid Id,
-    string sku,
+    string Sku,
     string Name,
     string? Description,
     string UnitOfMeasure,
@@ -11,7 +11,7 @@ public record ProductDto(
     bool IsActive);
 
 public record CreateProductRequest(
-    string sku,
+    string Sku,
     string Name,
     string UnitOfMeasure,
     decimal MinimumStock,

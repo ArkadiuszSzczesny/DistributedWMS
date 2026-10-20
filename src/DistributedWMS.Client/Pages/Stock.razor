@@ -1,0 +1,79 @@
+﻿@page "/stock"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>Stany magazynowe</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6">Stany magazynowe</MudText> 
+
+<MudSelect T="Guid?" Label="Lokalizacja" Value="_selectedLocationId"
+            ValueChanged="OnLocationChanged" Variant="Variant.Outlined" Class="mb-6">
+    @foreach (var location in _locations)
+    {
+        <MudSelectItem T="Guid?" Value="@location.Id">
+            @location.Code - @location.Name
+        </MudSelectItem>    
+    }
+</MudSelect>
+
+@if (_selectedLocationId is not null)
+{
+    <MudTable Items="_stock" Loading="_loading" Hover="true" Striped="true" Dense="true">
+        <HeaderContent>
+            <MudTh>Indeks</MudTh>
+            <MudTh>Nazwa</MudTh>
+            <MudTh Style="text-align:right">Ilość</MudTh>
+            <MudTh>J.m.</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Indeks">@context.Sku</MudTd>
+            <MudTd DataLabel="Nazwa">@context.ProductName</MudTd>
+            <MudTd DataLabel="Ilość" Style="text-align:right">
+                <strong>@context.Quantity.ToString("N2")</strong>
+            </MudTd>
+            <MudTd DataLabel="J.m">@context.UnitOfMeasure</MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText>Brak towarów w tej lokalizacji</MudText>
+        </NoRecordsContent>
+    </MudTable>
+}
+
+@code {
+    private IReadOnlyList<LocationDto> _locations = Array.Empty<LocationDto>();
+    private IReadOnlyList<StockItemDto> _stock = Array.Empty<StockItemDto>();
+    private Guid? _selectedLocationId;
+    private bool _loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/locations")
+                     ?? new List<LocationDto>();
+    }
+
+    private async Task OnLocationChanged(Guid? locationId)
+    {
+        _selectedLocationId = locationId;
+
+        if (locationId is null)
+            return;
+
+        _loading = true;
+
+        try
+        {
+            _stock = await Http.GetFromJsonAsync<List<StockItemDto>>($"api/stock/location/{locationId}")
+                     ?? new List<StockItemDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Nie udało się pobrać stanów: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+
+    }
+
+}
