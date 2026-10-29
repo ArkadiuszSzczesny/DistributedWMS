@@ -1,0 +1,265 @@
+﻿@page "/documents/{Id:guid}"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+
+<PageTitle>Dokument</PageTitle>
+
+@if (_document is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-6">
+        <MudText Typo="Typo.h4">@_document.Number</MudText>
+        <MudChip T="string" Color="@StatusColor(_document.Status)">
+            @DocumentLabels.StatusName(_document.Status)
+        </MudChip>
+        <MudSpacer />
+        @if (_document.IsEditable)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Success"
+                       StartIcon="@Icons.Material.Filled.CheckCircle"
+                       Disabled="@(_posting || _document.Lines.Count == 0)"
+                       OnClick="PostAsync">
+                   Zatwierdź dokument
+            </MudButton>
+        }
+        <MudButton Variant="Variant.Text" OnClick="@(() => Navigation.NavigateTo("documents"))">
+            Powrót
+        </MudButton>
+    </MudStack>
+
+    <MudPaper Class="pa-4 mb-6" Elevation="0" Outlined="true">
+        <MudGrid>
+            <MudItem xs="12" md="3">
+                <MudText Typo="Typo.caption">Typ</MudText>
+                <MudText>@DocumentLabels.TypeName(_document.Type)</MudText>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudText Typo="Typo.caption">Data wystawienia</MudText>
+                <MudText>@_document.DocumentDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</MudText>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudText Typo="Typo.caption">Lokalizacja źródłowa</MudText>
+                <MudText>@(_document.SourceLocationCode ?? "-")</MudText>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudText Typo="Typo.caption">Lokalizacja docelowa</MudText>
+                <MudText>@(_document.TargetLocationCode ?? "-")</MudText>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudText Typo="Typo.caption">Wystawił</MudText>
+                <MudText>@_document.CreatedByUserName</MudText>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudText Typo="Typo.caption">Odnośnik</MudText>
+                <MudText>@(_document.Reference ?? "-")</MudText>
+            </MudItem>
+            @if (_document.PostedAtUtc is not null)
+            {
+                <MudItem xs="12" md="3">
+                <MudText Typo="Typo.caption">Zaksięgowano</MudText>
+                <MudText>@_document.PostedAtUtc.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</MudText>
+                </MudItem>    
+            }
+            @if (!string.IsNullOrWhiteSpace(_document.Notes))
+            {
+                <MudItem xs="12">
+                    <MudText Typo="Typo.caption">Uwagi</MudText>
+                    <MudText>@_document.Notes</MudText>
+                </MudItem>
+            }
+        </MudGrid>
+    </MudPaper>
+
+    @if (_document.IsEditable)
+    {
+        <MudPaper Class="pa-4 mb-6" Elevation="0" Outlined="true">
+            <MudText Typo="Typo.subtitle1" Class="mb-4">Dodaj pozycję</MudText>
+            <MudGrid>
+                <MudItem xs="12" md="5">
+                    <MudSelect T="Guid?" Label="Towar" @bind-Value="_newProductId"
+                               Variant="Variant.Outlined" Dense="true">
+                        @foreach (var product in _products)
+                        {
+                            <MudSelectItem T="Guid?" Value="@product.Id">
+                                @product.Sku - @product.Name
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudNumericField @bind-Value="_newQuantity" Label="Ilość"
+                                     Min="0.001m" Variant="Variant.Outlined" Dense="true" />
+                </MudItem>
+                @if (_document.Type == "GoodsReceipt")
+                {
+                    <MudItem xs="12" md="2">
+                        <MudNumericField @bind-Value="_newPrice" Label="Cena jedn."
+                                         Min="0m" Variant="Variant.Outlined" Dense="true" />
+                    </MudItem>
+                }
+                <MudItem xs="12" md="2" Class="d-flex align-center">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               Disabled="@(_newProductId is null || _newQuantity <= 0)"
+                               OnClick="AddLineAsync">
+                           Dodaj
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    }
+
+    <MudTable Items="_document.Lines" Hover="true" Striped="true" Dense="true"
+              T="DocumentLineDto" Elevation="0">
+          <ToolBarContent>
+              <MudText Typo="Typo.subtitle1">Pozycje dokumentu</MudText>
+          </ToolBarContent> 
+          <HeaderContent>
+              <MudTh>Indeks</MudTh>
+              <MudTh>Nazwa</MudTh>
+              <MudTh Style="text-align:right">Ilość</MudTh>
+              <MudTh Style="text-align:right">Cena jedn.</MudTh>
+              <MudTh Style="text-align:right">Wartość</MudTh>
+              @if (_document.IsEditable)
+              {
+                  <MudTh></MudTh>
+              }
+          </HeaderContent>
+          <RowTemplate>
+              <MudTd DataLabel="Indeks">@context.Sku</MudTd>
+              <MudTd DataLabel="Nazwa">@context.ProductName</MudTd>
+              <MudTd DataLabel="Ilość" Style="text-align:right">
+                  <strong>@context.Quantity.ToString("N3")</strong> @context.UnitOfMeasure
+              </MudTd>
+              <MudTd DataLabel="Cena jedn." Style="text-align:right">
+                  @(context.UnitPrice?.ToString("N2") ?? "-")
+              </MudTd>
+              <MudTd DataLabel="Wartość" Style="text-align:right">
+                  @((context.UnitPrice * context.Quantity)?.ToString("N2") ?? "-")
+              </MudTd>
+              @if (_document.IsEditable)
+              {
+                  <MudTd Style="text-align:right">
+                      <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                     Color="Color.Error"
+                                     OnClick="@(() => RemoveLineAsync(context.Id))" />
+                  </MudTd>  
+              }
+          </RowTemplate>
+          <NoRecordsContent>
+              <MudText>Dokument nie zawiera pozycji.</MudText>
+          </NoRecordsContent>
+    </MudTable>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private DocumentDetailsDto? _document;
+    private IReadOnlyList<ProductDto> _products = Array.Empty<ProductDto>();
+
+    private Guid? _newProductId;
+    private decimal _newQuantity = 1m;
+    private decimal? _newPrice;
+    private bool _posting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _products = await Http.GetFromJsonAsync<List<ProductDto>>("api/products")
+                    ?? new List<ProductDto>();
+
+        await LoadDocumentAsync();
+    }
+
+    private async Task LoadDocumentAsync()
+    {
+        try
+        {
+            _document = await Http.GetFromJsonAsync<DocumentDetailsDto>($"api/documents/{Id}");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Nie udało się pobrać dokumentu: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AddLineAsync()
+    {
+        var request = new AddDocumentLineRequest(_newProductId!.Value, _newQuantity, _newPrice);
+        var response = await Http.PostAsJsonAsync($"api/documents/{Id}/lines", request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            _document = await response.Content.ReadFromJsonAsync<DocumentDetailsDto>();
+            _newProductId = null;
+            _newQuantity = 1m;
+            _newPrice = null;
+            return;
+        }
+
+        await ShowProblemAsync(response);
+    }
+
+    private async Task RemoveLineAsync(Guid lineId)
+    {
+        var response = await Http.DeleteAsync($"api/documents/{Id}/lines/{lineId}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            _document = await response.Content.ReadFromJsonAsync<DocumentDetailsDto>();
+            return;
+        }
+
+        await ShowProblemAsync(response);
+    }
+
+    private async Task PostAsync()
+    {
+        _posting = true;
+
+    try
+        {
+            var response = await Http.PostAsync($"api/documents/{Id}/post", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _document = await response.Content.ReadFromJsonAsync<DocumentDetailsDto>();
+                Snackbar.Add("Dokument został zatwierdzony, stany magazynowe zaktualizowane.",
+                    Severity.Success);
+                return;
+            }
+
+            await ShowProblemAsync(response);
+        }
+        finally
+        {
+            _posting = false;
+        }
+    }
+
+    /// <summary>Wyświetla komunikat błędu pochodzący z reguł domenowych.</summary>
+    private async Task ShowProblemAsync(HttpResponseMessage response)
+    {
+        try
+        {
+            var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
+            Snackbar.Add(problem?.Detail ?? "Operacja nie powiodła się.", Severity.Error);
+        }
+        catch
+        {
+            Snackbar.Add("Operacja nie powiodła się.", Severity.Error);
+        }
+    }
+
+    private static Color StatusColor(string status) => status switch
+    {
+        "Draft" => Color.Warning,
+        "Posted" => Color.Success,
+        "Cancelled" => Color.Error,
+        _ => Color.Default
+    };
+}

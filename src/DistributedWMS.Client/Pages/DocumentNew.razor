@@ -1,0 +1,199 @@
+﻿@page "/documents/new"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Nowy dokument</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6">Nowy dokument magazynowy</MudText>
+
+<MudPaper Class="pa-6" Elevation="0" Outlined="true" Style="max-width: 800px">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudSelect T="string" Label="Typ dokumentu" Value="_type" ValueChanged="OnTypeChanged"
+                       Variant="Variant.Outlined" Required="true">
+                   <MudSelectItem T="string" Value="@("GoodsReceipt")">PZ - przyjęcie zewnętrzne</MudSelectItem>
+                   <MudSelectItem T="string" Value="@("StockTransfer")">MM - przesunięcie międzymagazynowe</MudSelectItem>
+                   <MudSelectItem T="string" Value="@("InternalIssue")">RW - rozchód wewnętrzny</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+
+        @if (RequiresSource)
+        {
+            <MudItem xs="12" md="6">
+                <MudSelect T="Guid?" Label="Lokalizacja źródłowa" @bind-Value="_sourceLocationId"
+                           Variant="Variant.Outlined" Required="true">
+                    @foreach (var location in _locations)
+                    {
+                        <MudSelectItem T="Guid?" Value="@location.Id">
+                            @location.Code - @location.Name
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        }
+            
+        @if (RequiresTarget)
+        {
+            <MudItem xs="12" md="6">
+                <MudSelect T="Guid?" Label="Lokalizacja docelowa" @bind-Value="_targetLocationId"
+                           Variant="Variant.Outlined" Required="true">
+                    @foreach (var location in _locations)
+                    {
+                        <MudSelectItem T="Guid?" Value="@location.Id">
+                            @location.Code - @location.Name
+                        </MudSelectItem>    
+                    }   
+                </MudSelect>
+            </MudItem>   
+        }
+
+        <MudItem xd="12">
+            <MudSelect T="Guid?" Label="Wustawiający" @bind-Value="_userId"
+                       Variant="Variant.Outlined" Required="true">
+                @foreach (var user in _users)
+                    {
+                        <MudSelectItem T="Guid?" Value="@user.Id">
+                            @user.FullName (@user.UserName)
+                        </MudSelectItem>    
+                    } 
+            </MudSelect>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_reference" Label="@ReferenceLabel"
+                          Variant="Variant.Outlined" />
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_notes" Label="Uwagi" Lines="2"
+                          Variant="Variant.Outlined" />
+        </MudItem>
+    </MudGrid>
+
+    <MudStack Row="true" Spacing="2" Class="mt-6">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="@(!CanSubmit || _saving)" OnClick="CreateAsync">
+            @if (_saving)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+            }
+            Utwórz dokument
+        </MudButton>
+        <MudButton Variant="Variant.Text" OnClick="@(() => Navigation.NavigateTo("documents"))">
+            Anuluj
+        </MudButton>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private IReadOnlyList<LocationDto> _locations = Array.Empty<LocationDto>();
+    private IReadOnlyList<UserDto> _users = Array.Empty<UserDto>();
+
+    private string? _type;
+    private Guid? _sourceLocationId;
+    private Guid? _targetLocationId;
+    private Guid? _userId;
+    private string? _reference;
+    private string? _notes;
+    private bool _saving;
+
+    private bool RequiresSource => _type is "StockTransfer" or "InternalIssue";
+    private bool RequiresTarget => _type is "StockReceipt" or "StockTransfer";
+
+    private string ReferenceLabel => _type switch
+    {
+        "GoodsReceipt" => "Numer faktury dostawcy",
+        "InternalIssue" => "Numer zlecenia serwisowego",
+        _ => "Odnosnik"
+    };
+
+    private bool CanSubmit =>
+        !string.IsNullOrWhiteSpace(_type)
+        && _userId is not null
+        && (!RequiresSource || _sourceLocationId is not null)
+        && (!RequiresTarget || _targetLocationId is not null);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+    _locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/locations")
+                 ?? new List<LocationDto>();
+    _users = await Http.GetFromJsonAsync<List<UserDto>>("api/users")
+             ?? new List<UserDto>();
+        }
+        catch (Exception ex)
+        {
+    Snackbar.Add($"Nie udało się pobrać danych słownikowych: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void OnTypeChanged(string? value)
+    {
+        _type = value;
+
+        // Lokalizacje nieużywane przy danym typie muszą pozostać puste,
+        // ponieważ domena odrzuca dokument z nadmiarową lokalizacją.
+        if (!RequiresSource) _sourceLocationId = null;
+        if (!RequiresTarget) _targetLocationId = null;
+    }
+
+    private async Task CreateAsync()
+    {
+        _saving = true;
+
+    try
+    {
+    var request = new CreateDocumentRequest(
+        _type!,
+        _sourceLocationId,
+        _targetLocationId,
+        _userId!.Value,
+        string.IsNullOrWhiteSpace(_reference) ? null : _reference,
+        string.IsNullOrWhiteSpace(_notes) ? null : _notes);
+
+    var response = await Http.PostAsJsonAsync("api/documents", request);
+
+    if (response.IsSuccessStatusCode)
+    {
+        var created = await response.Content.ReadFromJsonAsync<DocumentDetailsDto>();
+
+        if (created is not null)
+        {
+            Snackbar.Add($"Utworzono dokument {created.Number}", Severity.Success);
+            Navigation.NavigateTo($"documents/{created.Id}");
+            return;
+        }
+    }
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
+        Snackbar.Add(problem?.Detail ?? "Nie udało się utworzyć dokumentu.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+        Snackbar.Add($"Błąd: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+        _saving = false;
+        }
+    }   
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
