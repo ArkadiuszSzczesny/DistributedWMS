@@ -1,6 +1,7 @@
 ﻿@page "/shortages"
 @inject HttpClient Http
 @inject ISnackbar Snackbar
+@inject NavigationManager Navigation
 
 <PageTitle>Raport braków</PageTitle>
 
@@ -9,7 +10,8 @@
     Towary, których łączny stan we wszystkich lokalizacjach jest niższy od progu minimalnego.
 </MudText>
 
-<MudTable Items="_shortages" Loading="_loading" Hover="true" Striped="true" Dense="true">
+<MudTable Items="_shortages" Loading="_loading" Hover="true" Striped="true" Dense="true"
+          OnRowClick="OnRowClick" T="StockSummaryDto" Class="cursor-pointer">
     <HeaderContent>
         <MudTh>Indeks</MudTh>
         <MudTh>Nazwa</MudTh>
@@ -56,6 +58,12 @@
         {
             _loading = false;
         }
+    }
+
+    private void OnRowClick(TableRowClickEventArgs<StockSummaryDto> args)
+    {
+        if (args.Item is not null)
+            Navigation.NavigateTo($"products/{args.Item.ProductId}/stock");
     }
 }
 

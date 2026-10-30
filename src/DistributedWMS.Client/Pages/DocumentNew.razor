@@ -15,7 +15,16 @@
                    <MudSelectItem T="string" Value="@("GoodsReceipt")">PZ - przyjęcie zewnętrzne</MudSelectItem>
                    <MudSelectItem T="string" Value="@("StockTransfer")">MM - przesunięcie międzymagazynowe</MudSelectItem>
                    <MudSelectItem T="string" Value="@("InternalIssue")">RW - rozchód wewnętrzny</MudSelectItem>
+                   <MudSelectItem T="string" Value="@("Inventory")">IN - inwentaryzacja</MudSelectItem>
             </MudSelect>
+            
+            @if (_type == "Inventory")
+            {
+                <MudAlert Severity="Severity.Warning" Class="mt-4" Dense="true">
+                    Inwentaryzacja ustawia stan wprost na podaną wartość, zastępując stan ewidencyjny.
+                    Pozycje nieujęte w dokumencie pozostają bez zmian.
+                </MudAlert>
+            }
         </MudItem>
 
         @if (RequiresSource)
@@ -99,12 +108,13 @@
     private bool _saving;
 
     private bool RequiresSource => _type is "StockTransfer" or "InternalIssue";
-    private bool RequiresTarget => _type is "StockReceipt" or "StockTransfer";
+    private bool RequiresTarget => _type is "StockReceipt" or "StockTransfer" or "Inventory";
 
     private string ReferenceLabel => _type switch
     {
         "GoodsReceipt" => "Numer faktury dostawcy",
         "InternalIssue" => "Numer zlecenia serwisowego",
+        "Inventory" => "Numer protokołu inwentaryzacji",
         _ => "Odnosnik"
     };
 

@@ -1,13 +1,15 @@
 ﻿@page "/products"
 @inject HttpClient Http
 @inject ISnackbar Snackbar
+@inject NavigationManager Navigation
 
 <PageTitle>Kartoteka towarów</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-6">Kartoteka towarów</MudText>
 
 <MudTable Items="_products" Loading="_loading" Hover="true" Striped="true"
-          Filter="FilterFunc" Dense="true">
+          Filter="FilterFunc" Dense="true"
+          OnRowClick="OnRowClick" T="ProductDto" Class="cursor-pointer">
     <ToolBarContent>
         <MudTextField @bind-Value="_search" Placeholder="Szukaj po indeksie lub nazwie"
                     Adornment="Adornment.Start"
@@ -60,7 +62,14 @@
         if (string.IsNullOrWhiteSpace(_search))
             return true;
 
-            return product.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase)
-                || product.Name.Contains(_search, StringComparison.OrdinalIgnoreCase);
+        return product.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase)
+            || product.Name.Contains(_search, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void OnRowClick(TableRowClickEventArgs<ProductDto> args)
+    {
+        if (args.Item is not null)
+            Navigation.NavigateTo($"products/{args.Item.Id}/stock");
+
     }
 }

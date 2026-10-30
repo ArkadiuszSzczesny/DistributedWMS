@@ -1,0 +1,77 @@
+﻿@page "/products/{Id:guid}/stock"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Rozmieszczenie towaru</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-6">
+    <MudText Typo="Typo.h4">Rozmieszczenie towaru</MudText>
+    <MudSpacer />
+    <MudButton Variant="Variant.Text" OnClick="@(() => Navigation.NavigateTo("products"))">
+        Powrót do kartoteki
+    </MudButton>
+</MudStack>
+
+@if (_product is not null)
+{
+    <MudPaper Class="pa-4 mb-6" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.h6">@_product.Sku - @_product.Name</MudText>
+        <MudText Typo="Typo.body2" Class="mt-2">
+            Stan minimalny: @_product.MinimumStock.ToString("N2") @_product.UnitOfMeasure
+        </MudText>
+    </MudPaper>
+}
+
+<MudTable Items="_stock" Loading="_loading" Hover="true" Striped="true" Dense="true"
+          T="StockItemDto">
+      <HeaderContent>
+          <MudTh>Kod lokalizacji</MudTh>
+          <MudTh>Nazwa</MudTh>
+          <MudTh Style="text-align:right">Ilość</MudTh>
+      </HeaderContent>
+      <RowTemplate>
+          <MudTd DataLabel="Kod"><strong>@context.LocationCode</strong></MudTd>
+          <MudTd DataLabel="Nazwa">@context.LocationName</MudTd>
+          <MudTd DataLabel="Ilość" Style="text-align:right">
+              @context.Quantity.ToString("N3") @context.UnitOfMeasure
+          </MudTd>
+      </RowTemplate>
+      <NoRecordsContent>
+          <MudText>Towar nie występuje w żadnej lokalizacji.</MudText>
+      </NoRecordsContent>
+      <FooterContent>
+          <MudTFootRow>
+              <MudTh colspan="2"><strong>Razem w systemie</strong></MudTh>
+              <MudTh Style="text-align:right">
+                  <strong>@_stock.Sum(s => s.Quantity).ToString("N3")</strong>
+              </MudTh>
+          </MudTFootRow>
+      </FooterContent>
+</MudTable>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private ProductDto? _product;
+    private IReadOnlyList<StockItemDto> _stock = Array.Empty<StockItemDto>();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _product = await Http.GetFromJsonAsync<ProductDto>($"api/products/{Id}");
+            _stock = await Http.GetFromJsonAsync<List<StockItemDto>>($"api/stock/product/{Id}")
+                     ?? new List<StockItemDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Nie udało się pobrać danych: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

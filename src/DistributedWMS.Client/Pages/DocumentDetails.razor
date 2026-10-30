@@ -93,13 +93,13 @@ else
                 </MudItem>
                 <MudItem xs="12" md="3">
                     <MudNumericField @bind-Value="_newQuantity" Label="Ilość"
-                                     Min="0.001m" Variant="Variant.Outlined" Dense="true" />
+                                     Min="0.001m" Variant="Variant.Outlined" />
                 </MudItem>
                 @if (_document.Type == "GoodsReceipt")
                 {
                     <MudItem xs="12" md="2">
                         <MudNumericField @bind-Value="_newPrice" Label="Cena jedn."
-                                         Min="0m" Variant="Variant.Outlined" Dense="true" />
+                                         Min="0m" Variant="Variant.Outlined" />
                     </MudItem>
                 }
                 <MudItem xs="12" md="2" Class="d-flex align-center">
