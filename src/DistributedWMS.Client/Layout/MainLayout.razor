@@ -1,4 +1,6 @@
-﻿@inherits LayoutComponentBase
+﻿@inject JwtAuthStateProvider AuthProvider
+@inject NavigationManager Navigation
+@inherits LayoutComponentBase
 
 <MudThemeProvider />
 <MudPopoverProvider />
@@ -9,7 +11,15 @@
     <MudAppBar Elevation="1">
         <MudText Typo="Typo.h6">DistributedWMS</MudText>
         <MudSpacer />
-        <MudText Typo="Typo.body2">System zarządzania gospodarką magazynową</MudText>
+        <AuthorizeView>
+            <Authorized>
+                <MudText Typo="Typo.body2" Class="mr-4">
+                    @context.User.Identity?.Name (@RoleName(context.User))
+                </MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit"
+                               OnClick="LogoutAsync" title="Wyloguj" />
+            </Authorized>
+        </AuthorizeView>
     </MudAppBar>
 
     <MudDrawer Open="true" Variant="DrawerVariant.Persistent" Elevation="1">
@@ -41,3 +51,20 @@
         </MudContainer>
     </MudMainContent>
 </MudLayout>
+
+@code {
+    private async Task LogoutAsync()
+    {
+        await AuthProvider.SignOutAsync();
+        Navigation.NavigateTo("login", replace: true);
+    }
+
+    private static string RoleName(System.Security.Claims.ClaimsPrincipal user)
+    {
+        if (user.IsInRole("Manager")) return "Kierownik";
+        if (user.IsInRole("WarehouseIperator")) return "Magazynier";
+        if (user.IsInRole("Technican")) return "Serwisant";
+        return string.Empty;
+
+    }
+}

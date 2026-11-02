@@ -1,4 +1,5 @@
 ﻿@page "/documents/{Id:guid}"
+@attribute [Authorize]
 @inject HttpClient Http
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation

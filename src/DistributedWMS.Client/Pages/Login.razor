@@ -1,0 +1,86 @@
+﻿@page "/login"
+@layout EmptyLayout
+@inject HttpClient Http
+@inject JwtAuthStateProvider AuthProvider
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Logowanie</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="mt-16">
+    <MudPaper Class="pa-8" Elevation="2">
+        <MudText Typo="Typo.h5" Class="mb-2">DistributedWMS</MudText>
+        <MudText Typo="Typo.body2" Class="mb-6">
+            System zarządzania gospodarką magazynową
+        </MudText>
+
+        <MudTextField @bind-Value="_userName" Label="Nazwa użytkownika"
+                      Variant="Variant.Outlined" Class="mb-4"
+                      OnKeyDown="OnKeyDown" />
+
+        <MudTextField @bind-Value="_password" Label="Hasło"
+                      InputType="InputType.Password"
+                      Variant="Variant.Outlined" Class="mb-6"
+                      OnKeyDown="OnKeyDown" />
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                   Disabled="@(_busy || string.IsNullOrWhiteSpace(_userName))"
+                   OnClick="LoginAsync">
+            @if (_busy)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+            }
+            Zaloguj się
+        </MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    private string _userName = string.Empty;
+    private string _password = string.Empty;
+    private bool _busy;
+
+    private async Task OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+            await LoginAsync();
+    }
+
+    private async Task LoginAsync()
+    {
+        _busy = true;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync(
+                "api/auth/login", new LoginRequest(_userName, _password));
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+
+                if (result is not null)
+                {
+                    await AuthProvider.SignInAsync(result.Token);
+                    Snackbar.Add($"Zalogowano jako {result.FullName}", Severity.Success);
+                    Navigation.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "" : ReturnUrl);
+                    return;
+                }
+            }
+
+            var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
+            Snackbar.Add(problem?.Detail ?? "Logowanie nie powiodło się.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Błąd połączenia: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

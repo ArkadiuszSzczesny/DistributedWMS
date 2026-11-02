@@ -45,6 +45,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwt["Issuer"],
+            ValidAudience = jwt["Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwt["Key"]!))
         };
@@ -74,10 +75,11 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseAuthentication();
-app.UseAuthorization();
+
 app.UseHttpsRedirection();
 app.UseCors("BlazorClient");
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
