@@ -30,18 +30,22 @@
             <MudNavLink Href="products" Icon="@Icons.Material.Filled.Inventory2">
                 Kartoteka towarów
             </MudNavLink>
-            <MudNavLink Href="locations" Icon="@Icons.Material.Filled.Warehouse">
-                Lokalizacje
-            </MudNavLink>
             <MudNavLink Href="stock" Icon="@Icons.Material.Filled.Checklist">
                 Stany magazynowe
-            </MudNavLink>
-            <MudNavLink Href="shortages" Icon="@Icons.Material.Filled.Warning">
-                Raport braków
             </MudNavLink>
             <MudNavLink Href="documents" Icon="@Icons.Material.Filled.Description">
                 Dokumenty
             </MudNavLink>
+            <AuthorizeView Roles="Manager,WarehouseOperator">
+                <Authorized>
+                    <MudNavLink Href="locations" Icon="@Icons.Material.Filled.Warehouse">
+                        Lokalizacje
+                    </MudNavLink>
+                    <MudNavLink Href="shortages" Icon="@Icons.Material.Filled.Warning">
+                        Raport braków
+                    </MudNavLink>
+                </Authorized>
+            </AuthorizeView>
         </MudNavMenu>
     </MudDrawer>
 
@@ -62,8 +66,8 @@
     private static string RoleName(System.Security.Claims.ClaimsPrincipal user)
     {
         if (user.IsInRole("Manager")) return "Kierownik";
-        if (user.IsInRole("WarehouseIperator")) return "Magazynier";
-        if (user.IsInRole("Technican")) return "Serwisant";
+        if (user.IsInRole("WarehouseOperator")) return "Magazynier";
+        if (user.IsInRole("Technician")) return "Serwisant";
         return string.Empty;
 
     }

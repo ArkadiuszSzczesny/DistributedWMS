@@ -3,6 +3,7 @@
 @inject HttpClient Http
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+ @inject AuthenticationStateProvider AuthProvider
 
 <PageTitle>Nowy dokument</PageTitle>
 
@@ -57,18 +58,6 @@
                 </MudSelect>
             </MudItem>   
         }
-
-        <MudItem xd="12">
-            <MudSelect T="Guid?" Label="Wustawiający" @bind-Value="_userId"
-                       Variant="Variant.Outlined" Required="true">
-                @foreach (var user in _users)
-                    {
-                        <MudSelectItem T="Guid?" Value="@user.Id">
-                            @user.FullName (@user.UserName)
-                        </MudSelectItem>    
-                    } 
-            </MudSelect>
-        </MudItem>
 
         <MudItem xs="12" md="6">
             <MudTextField @bind-Value="_reference" Label="@ReferenceLabel"
@@ -129,14 +118,21 @@
     {
         try
         {
-    _locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/locations")
-                 ?? new List<LocationDto>();
-    _users = await Http.GetFromJsonAsync<List<UserDto>>("api/users")
-             ?? new List<UserDto>();
+            _locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/locations")
+                            ?? new List<LocationDto>();
+            
+            //Identyfikator wystawiającego pochodzi z tokenu zalogowanego użytkownika.
+            var state = await AuthProvider.GetAuthenticationStateAsync();
+            var claim = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+
+            if (claim is not null && Guid.TryParse(claim.Value, out var userId))
+            {
+                _userId = userId;
+            }
         }
         catch (Exception ex)
         {
-    Snackbar.Add($"Nie udało się pobrać danych słownikowych: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Nie udało się pobrać danych słownikowych: {ex.Message}", Severity.Error);
         }
     }
 
