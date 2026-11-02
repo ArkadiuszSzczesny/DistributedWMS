@@ -1,9 +1,11 @@
 ﻿using DistributedWMS.Application.Locations;
 using DistributedWMS.Shared.Locations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DistributedWMS.WebApi.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
@@ -27,6 +29,7 @@ public class LocationsController : ControllerBase
         => Ok(await _locations.GetByIdAsync(id, ct));
 
     ///<summary>Tworzy nową lokalizację. Magazyn mobilny wymaga numeru rejestracyjnego.</summary>
+    [Authorize(Roles = "Manager")]
     [HttpPost]
     [ProducesResponseType(typeof(LocationDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -37,6 +40,7 @@ public class LocationsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
+    [Authorize(Roles = "Manager")]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

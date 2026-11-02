@@ -4,6 +4,10 @@ using DistributedWMS.Infrastructure.Persistance;
 using DistributedWMS.WebApi.Common;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens.Experimental;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +33,25 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
+var jwt = builder.Configuration.GetSection("Jwt");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwt["Issuer"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwt["Key"]!))
+        };
+    });
+
+builder.Services.AddAuthentication();
+
 var app = builder.Build();
 
 // Zastosowanie migracji oraz zasilenie bazy danymi początkowymi.
@@ -51,6 +74,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseHttpsRedirection();
 app.UseCors("BlazorClient");
 app.MapControllers();

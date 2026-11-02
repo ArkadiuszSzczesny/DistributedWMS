@@ -47,7 +47,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             _logger.LogWarning("Odrzucono żądanie: {Message}", exception.Message);
 
         problem.Instance = context.Request.Path;
-        context.Response.StatusCode = problem.Status.Value;
+        context.Response.StatusCode = problem.Status ?? StatusCodes.Status500InternalServerError;
 
         await context.Response.WriteAsJsonAsync(problem, ct);
 

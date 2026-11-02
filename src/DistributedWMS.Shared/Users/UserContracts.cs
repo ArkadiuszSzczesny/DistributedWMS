@@ -6,4 +6,14 @@ public record UserDto(
     string FullName,
     string Role,
     Guid? AssignedLocationId,
-    string? AssignedLocationCode); 
+    string? AssignedLocationCode);
+
+public record LoginRequest(string UserName, string Password);
+
+public record LoginResponse(
+    string Token,
+    Guid UserId,
+    string UserName,
+    string FullName,
+    string Role,
+    Guid? AssignedLocationId);

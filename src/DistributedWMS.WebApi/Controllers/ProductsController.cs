@@ -1,9 +1,11 @@
 ﻿using DistributedWMS.Application.Products;
 using DistributedWMS.Shared.Products;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DistributedWMS.WebApi.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
@@ -28,6 +30,7 @@ public class ProductsController : ControllerBase
         => Ok(await _products.GetByIdAsync(id, ct));
 
     /// <summary> Dodaje nowy towar do kartoteki.</summary>
+    [Authorize(Roles = "Manager")]
     [HttpPost]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -39,6 +42,7 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>Aktualizuje dane towaru.</summary.>
+    [Authorize(Roles = "Manager")]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<ProductDto>> Update(
@@ -46,6 +50,7 @@ public class ProductsController : ControllerBase
         => Ok(await _products.UpdateAsync(id, request, ct));
 
     /// <summary>Wycofuje towar z obrotu bez usuwania historii dokumentów.</summary>
+    [Authorize(Roles = "Manager")]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

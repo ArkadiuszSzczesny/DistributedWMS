@@ -1,10 +1,12 @@
 ﻿using DistributedWMS.Application.Documents;
 using DistributedWMS.Domain.Entities;
 using DistributedWMS.Shared.Documents;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DistributedWMS.WebApi.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
@@ -30,6 +32,7 @@ public class DocumentsController : ControllerBase
         => Ok(await _documents.GetByIdAsync(id, ct));
 
     /// <summary>Tworzy dokument roboczy. Numer nadwany jest automatycznie.</summary>
+    [Authorize(Roles = "WarehouseOperator,Technician,Manager")]
     [HttpPost]
     [ProducesResponseType(typeof(DocumentDetailsDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

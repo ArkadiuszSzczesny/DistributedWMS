@@ -1,10 +1,12 @@
 ﻿using DistributedWMS.Application.Common.Interfaces;
 using DistributedWMS.Shared.Users;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace DistributedWMS.WebApi.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]

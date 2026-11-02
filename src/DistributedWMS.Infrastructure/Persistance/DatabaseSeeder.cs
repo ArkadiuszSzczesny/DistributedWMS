@@ -33,14 +33,16 @@ public static class DatabaseSeeder
         db.Locations.AddRange(mainWarehouse, van1, van2);
 
         // --- użytkownicy ---
-        // Hasła zostaną zastąpione skrótami w etapie wdrożenia uwierzytelniania.
-        var manager = new User("kierownik", "Anna Kowalska", "DO_ZMIANY", UserRole.Manager);
-        var operatorUser = new User("magazynier", "Piotr Nowak", "DO_ZMIANY", UserRole.WarehouseOperator);
+        // Hasła demonstarcyjne; w środowisku produkcyjnym wymoszona byłaby ich zmiana.
+        var hash = BCrypt.Net.BCrypt.HashPassword("Haslo123!");
 
-        var tech1 = new User("serwisant1", "Marek Wiśniewski", "DO_ZMIANY", UserRole.Technician);
+        var manager = new User("kierownik", "Anna Kowalska", hash, UserRole.Manager);
+        var operatorUser = new User("magazynier", "Piotr Nowak", hash, UserRole.WarehouseOperator);
+
+        var tech1 = new User("serwisant1", "Marek Wiśniewski", hash, UserRole.Technician);
         tech1.AssignLocation(van1);
 
-        var tech2 = new User("serwisant2", "Tomasz Lewandowski", "DO_ZMIANY", UserRole.Technician);
+        var tech2 = new User("serwisant2", "Tomasz Lewandowski", hash, UserRole.Technician);
         tech2.AssignLocation(van2);
 
         db.Users.AddRange(manager, operatorUser, tech1, tech2);

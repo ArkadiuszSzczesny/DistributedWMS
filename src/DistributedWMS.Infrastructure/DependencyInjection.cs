@@ -1,4 +1,5 @@
 ﻿using DistributedWMS.Application.Common.Interfaces;
+using DistributedWMS.Infrastructure.Authentication;
 using DistributedWMS.Infrastructure.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,10 @@ public static class DepencencyInjection
             options.UseNpgsql( connectionString));
 
         services.AddScoped<IWmsDbContext>(sp => sp.GetRequiredService<WmsDbContext>());
+        services.AddHttpContextAccessor();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ICurrentUser, CurrentUser>();
+
 
         return services;
     }
