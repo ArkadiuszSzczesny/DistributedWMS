@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using DistributedWMS.Application.Common.Interfaces;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace DistributedWMS.Infrastructure.Persistance;
+namespace DistributedWMS.Infrastructure.Persistence;
 
 ///<summary>
 ///Kontekst bazy danych systemu. Konfiguracje poszczególnych encji

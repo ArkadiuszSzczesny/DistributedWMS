@@ -58,7 +58,7 @@ public class  StockItem : EntityBase
 
         if (Quantity < quantity)
             throw new DomainException(
-                $"Niewystarzajacy stan magazynowy. Dostępne: {Quantity}, żądane: {quantity}.");
+                $"Niewystarczający stan magazynowy. Dostępne: {Quantity}, żądane: {quantity}.");
 
         Quantity -= quantity;
         ModifiedAtUtc = DateTime.UtcNow;

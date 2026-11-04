@@ -98,7 +98,7 @@
     private bool _saving;
 
     private bool RequiresSource => _type is "StockTransfer" or "InternalIssue";
-    private bool RequiresTarget => _type is "StockReceipt" or "StockTransfer" or "Inventory";
+    private bool RequiresTarget => _type is "GoodsReceipt" or "StockTransfer" or "Inventory";
 
     private string ReferenceLabel => _type switch
     {

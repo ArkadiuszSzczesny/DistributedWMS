@@ -1,6 +1,5 @@
 using DistributedWMS.Application;
 using DistributedWMS.Infrastructure;
-using DistributedWMS.Infrastructure.Persistance;
 using DistributedWMS.WebApi.Common;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +7,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Tokens.Experimental;
+using DistributedWMS.Infrastructure.Persistence;
 
 
 var builder = WebApplication.CreateBuilder(args);

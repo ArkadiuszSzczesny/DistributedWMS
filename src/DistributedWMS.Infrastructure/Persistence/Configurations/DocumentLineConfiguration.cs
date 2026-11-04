@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 
-namespace DistributedWMS.Infrastructure.Persistance.Configurations;
+namespace DistributedWMS.Infrastructure.Persistence.Configurations;
 
 public class DocumentLineConfiguration : IEntityTypeConfiguration<DocumentLine>
 {

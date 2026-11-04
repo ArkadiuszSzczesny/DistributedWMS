@@ -1,6 +1,6 @@
 ﻿using DistributedWMS.Application.Common.Interfaces;
 using DistributedWMS.Infrastructure.Authentication;
-using DistributedWMS.Infrastructure.Persistance;
+using DistributedWMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 

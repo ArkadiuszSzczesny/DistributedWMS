@@ -5,9 +5,6 @@ using DistributedWMS.Domain.Enums;
 using DistributedWMS.Domain.Exceptions;
 using DistributedWMS.Shared.Documents;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
-using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 
 namespace DistributedWMS.Application.Documents;
 
@@ -15,11 +12,16 @@ public class DocumentService : IDocumentService
 {
     private readonly IWmsDbContext _db;
     private readonly IDocumentNumberGenerator _numberGenerator;
+    private readonly ICurrentUser _currentUser;
 
-    public DocumentService(IWmsDbContext db, IDocumentNumberGenerator numberGenerator)
+    public DocumentService(
+        IWmsDbContext db,
+        IDocumentNumberGenerator numberGenerator,
+        ICurrentUser currentUser)
     {
         _db = db;
         _numberGenerator = numberGenerator;
+        _currentUser = currentUser;
     }
 
     //------ odczyt ------
@@ -55,8 +57,7 @@ public class DocumentService : IDocumentService
 
     public async Task<DocumentDetailsDto> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        var document = await LoadFullAsync(id, tracking: false, ct);
-        return await MapDetailsAsync(document.Id, ct);
+        return await MapDetailsAsync(id, ct);
     }
 
     // ------ modyfikacja dokumentu roboczego ------
@@ -69,6 +70,7 @@ public class DocumentService : IDocumentService
         await EnsureUserExistsAsync(request.CreatedByUserId, ct);
         await EnsureLocationExistsAsync(request.SourceLocationId, ct);
         await EnsureLocationExistsAsync(request.TargetLocationId, ct);
+        EnsureSourceLocationAllowed(request.SourceLocationId);
 
         var number = await _numberGenerator.GenerateAsync(type, ct);
 
@@ -178,7 +180,7 @@ public class DocumentService : IDocumentService
         {
             await transaction.RollbackAsync(ct);
             throw new DomainException(
-                "Stan magazynowy został zmieniony przez innego użytkownika w trakcie zatwierdzania." +
+                "Stan magazynowy został zmieniony przez innego użytkownika w trakcie zatwierdzania. " +
                 "Odśwież dane i spróbuj ponownie.");
         }
         catch
@@ -223,7 +225,7 @@ public class DocumentService : IDocumentService
 
     /// <summary>
     /// Zwraca rekord stanu, tworząc go przy pierwszym ruchu danego towaru
-    /// w danej lokalizacji. Dzięki temu baza nie przechowue pustych kombinacji.
+    /// w danej lokalizacji. Dzięki temu baza nie przechowuje pustych kombinacji.
     /// </summary>
     private async Task<StockItem> GetOrCreateStockAsync(Guid productId, Guid locationId, CancellationToken ct)
     {
@@ -273,8 +275,27 @@ public class DocumentService : IDocumentService
     }
 
     /// <summary>
+    /// Weryfikuje uprawnienie do rozchodu z danej lokalizacji. Serwisant może
+    /// wystawiać dokumenty wyłącznie z przypisanego mu magazynu mobilnego,
+    /// co stanowi autoryzację na poziomie zasobu, uzupełniającą kontrolę rolową.
+    /// </summary>
+    private void EnsureSourceLocationAllowed(Guid? sourceLocationId)
+    {
+        if (sourceLocationId is null)
+            return;
+
+        if (_currentUser.Role != UserRole.Technician)
+            return;
+
+        if (_currentUser.AssignedLocationId != sourceLocationId)
+            throw new DomainException(
+                "Serwisant może wystawiać dokumenty wyłącznie z przypisanego magazynu mobilnego.");
+    }
+
+
+    /// <summary>
     /// Buduje pełną reprezentację dokumentu. Dane pozycji pobierane są
-    /// pojedynczmy zapytaniem ze złączeniem kartoteki towarowej.
+    /// pojedynczym zapytaniem ze złączeniem kartoteki towarowej.
     /// </summary>
     private async Task<DocumentDetailsDto> MapDetailsAsync(Guid documentId, CancellationToken ct)
     {

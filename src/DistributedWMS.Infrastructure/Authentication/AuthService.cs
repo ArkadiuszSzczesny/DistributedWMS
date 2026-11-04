@@ -37,7 +37,7 @@ public class AuthService : IAuthService
         if (user is null || !VerifyPassword(request.Password, user.PasswordHash))
             throw new DomainException("Nieprawidłowa nazwa użytkownika lub hasło.");
 
-        var token = GenerateToken(user.Id, user.UserName, user.Role.ToString(), user.AssignedLocationId);
+        var token = GenerateToken(user.Id, user.UserName, user.FullName, user.Role.ToString(), user.AssignedLocationId);
 
         return new LoginResponse(
             token,
@@ -48,7 +48,7 @@ public class AuthService : IAuthService
             user.AssignedLocationId);
     }
 
-    private string GenerateToken(Guid userId, string userName, string role, Guid? locationId)
+    private string GenerateToken(Guid userId, string userName, string fullName, string role, Guid? locationId)
     {
         var jwt = _configuration.GetSection("Jwt");
 
@@ -60,7 +60,8 @@ public class AuthService : IAuthService
             new (JwtRegisteredClaimNames.Sub, userId.ToString()),
             new (ClaimTypes.NameIdentifier, userId.ToString()),
             new (ClaimTypes.Name, userName),
-            new (ClaimTypes.Role, role)
+            new (ClaimTypes.Role, role),
+            new ("fullName", fullName)
         };
 
         if (locationId is not null)
