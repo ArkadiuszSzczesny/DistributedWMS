@@ -8,4 +8,5 @@
   <Project Path="src/DistributedWMS.Infrastructure/DistributedWMS.Infrastructure.csproj" />
   <Project Path="src/DistributedWMS.Shared/DistributedWMS.Shared.csproj" />
   <Project Path="src/DistributedWMS.WebApi/DistributedWMS.WebApi.csproj" />
+  <Project Path="tests/DistributedWMS/Tests/Tests.csproj" Id="b8135dc7-1491-450a-a5ef-464eac0d72e1" />
 </Solution>
