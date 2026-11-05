@@ -1,27 +1,40 @@
-﻿@attribute [Authorize]
-@page "/products"
+﻿@page "/products"
+@attribute [Authorize]
 @inject HttpClient Http
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject NavigationManager Navigation
 
 <PageTitle>Kartoteka towarów</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-6">Kartoteka towarów</MudText>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-6">
+    <MudText Typo="Typo.h4">Kartoteka towarów</MudText>
+    <MudSpacer />
+    <AuthorizeView Roles="Manager" Context="auth">
+        <Authorized>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@(() => OpenDialogAsync())">
+                Nowy towar
+            </MudButton>
+        </Authorized>
+    </AuthorizeView>
+</MudStack>
 
 <MudTable Items="_products" Loading="_loading" Hover="true" Striped="true"
-          Filter="FilterFunc" Dense="true"
-          OnRowClick="OnRowClick" T="ProductDto" Class="cursor-pointer">
+          Filter="FilterFunc" Dense="true" T="ProductDto">
     <ToolBarContent>
         <MudTextField @bind-Value="_search" Placeholder="Szukaj po indeksie lub nazwie"
-                    Adornment="Adornment.Start"
-                    AdornmentIcon="@Icons.Material.Filled.Search"
-                    IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium" Class="mt-0" Immediate="true" />
     </ToolBarContent>
     <HeaderContent>
         <MudTh>Indeks</MudTh>
         <MudTh>Nazwa</MudTh>
         <MudTh>J.m.</MudTh>
         <MudTh Style="text-align:right">Stan minimalny</MudTh>
+        <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Indeks">@context.Sku</MudTd>
@@ -30,9 +43,24 @@
         <MudTd DataLabel="Stan minimalny" Style="text-align:right">
             @context.MinimumStock.ToString("N2")
         </MudTd>
+        <MudTd Style="text-align:right">
+            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                           title="Rozmieszczenie w lokalizacjach"
+                           OnClick="@(() => Navigation.NavigateTo($"products/{context.Id}/stock"))" />
+            <AuthorizeView Roles="Manager" Context="auth">
+                <Authorized>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                   title="Edytuj dane towaru"
+                                   OnClick="@(() => OpenDialogAsync(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Block" Size="Size.Small"
+                                   Color="Color.Error" title="Wycofaj z obrotu"
+                                   OnClick="@(() => DeactivateAsync(context))" />
+                </Authorized>
+            </AuthorizeView>
+        </MudTd>
     </RowTemplate>
     <NoRecordsContent>
-        <MudText>Brak towarów w kartotece</MudText>
+        <MudText>Brak towarów w kartotece.</MudText>
     </NoRecordsContent>
 </MudTable>
 
@@ -41,8 +69,12 @@
     private bool _loading = true;
     private string _search = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
     {
+        _loading = true;
+
         try
         {
             _products = await Http.GetFromJsonAsync<List<ProductDto>>("api/products")
@@ -58,6 +90,50 @@
         }
     }
 
+    private async Task OpenDialogAsync(ProductDto? product = null)
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+
+        var parameters = new DialogParameters<ProductDialog>
+        {
+            { x => x.Product, product }
+        };
+
+        var title = product is null ? "Nowy towar" : $"Edycja towaru {product.Sku}";
+
+        var dialog = await DialogService.ShowAsync<ProductDialog>(title, parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+            await LoadAsync();
+    }
+
+    private async Task DeactivateAsync(ProductDto product)
+    {
+        var response = await Http.DeleteAsync($"api/products/{product.Id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add($"Wycofano towar {product.Sku} z obrotu.", Severity.Success);
+            await LoadAsync();
+            return;
+        }
+
+        try
+        {
+            var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
+            Snackbar.Add(problem?.Detail ?? "Operacja nie powiodła się.", Severity.Error);
+        }
+        catch
+        {
+            Snackbar.Add("Operacja nie powiodła się.", Severity.Error);
+        }
+    }
+
     private bool FilterFunc(ProductDto product)
     {
         if (string.IsNullOrWhiteSpace(_search))
@@ -65,12 +141,5 @@
 
         return product.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase)
             || product.Name.Contains(_search, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private void OnRowClick(TableRowClickEventArgs<ProductDto> args)
-    {
-        if (args.Item is not null)
-            Navigation.NavigateTo($"products/{args.Item.Id}/stock");
-
     }
 }

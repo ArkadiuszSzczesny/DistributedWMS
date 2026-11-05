@@ -37,7 +37,7 @@ public class CurrentUser : ICurrentUser
     {
         get
         {
-            var value = Principal?.FindFirst("assignedLocationId")?.Value;
+            var value = Principal?.FindFirst("assignedLocation")?.Value;
             return Guid.TryParse(value, out var id) ? id : null;
         }
     }

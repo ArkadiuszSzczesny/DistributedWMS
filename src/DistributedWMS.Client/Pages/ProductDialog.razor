@@ -1,0 +1,122 @@
+﻿@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_sku" Label="Indeks katalogowy"
+                              Variant="Variant.Outlined" Required="true"
+                              Disabled="@IsEdit"
+                              HelperText="@(IsEdit ? "Indeksu nie można zmienić" : "Unikalny symbol towaru, np. KAB-YDY-3X25")" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_unit" Label="Jednostka miary"
+                              Variant="Variant.Outlined" Required="true"
+                              HelperText="np. szt, m, kg" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_name" Label="Nazwa towaru"
+                              Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="_minimumStock" Label="Stan minimalny"
+                                 Min="0m" Variant="Variant.Outlined"
+                                 HelperText="Próg alarmowy dla raportu braków" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_description" Label="Opis" Lines="2"
+                              Variant="Variant.Outlined" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Anuluj</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="@(_saving || !CanSubmit)" OnClick="SaveAsync">
+            @(IsEdit ? "Zapisz zmiany" : "Dodaj towar")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public ProductDto? Product { get; set; }
+
+    private string _sku = string.Empty;
+    private string _name = string.Empty;
+    private string _unit = "szt";
+    private decimal _minimumStock;
+    private string? _description;
+    private bool _saving;
+
+    private bool IsEdit => Product is not null;
+
+    private bool CanSubmit =>
+        !string.IsNullOrWhiteSpace(_sku)
+        && !string.IsNullOrWhiteSpace(_name)
+        && !string.IsNullOrWhiteSpace(_unit);
+
+    protected override void OnInitialized()
+    {
+        if (Product is null)
+            return;
+
+        _sku = Product.Sku;
+        _name = Product.Name;
+        _unit = Product.UnitOfMeasure;
+        _minimumStock = Product.MinimumStock;
+        _description = Product.Description;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+
+        try
+        {
+            HttpResponseMessage response;
+
+            if (IsEdit)
+            {
+                var request = new UpdateProductRequest(
+                    _name, _unit, _minimumStock,
+                    string.IsNullOrWhiteSpace(_description) ? null : _description);
+
+                response = await Http.PutAsJsonAsync($"api/products/{Product!.Id}", request);
+            }
+            else
+            {
+                var request = new CreateProductRequest(
+                    _sku, _name, _unit, _minimumStock,
+                    string.IsNullOrWhiteSpace(_description) ? null : _description);
+
+                response = await Http.PostAsJsonAsync("api/products", request);
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add(
+                    IsEdit ? "Zapisano zmiany." : $"Dodano towar {_sku.ToUpperInvariant()}",
+                    Severity.Success);
+
+                MudDialog.Close(DialogResult.Ok(true));
+                return;
+            }
+
+            var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
+            Snackbar.Add(problem?.Detail ?? "Nie udało się zapisać danych.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Błąd: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

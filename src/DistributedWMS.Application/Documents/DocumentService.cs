@@ -67,6 +67,12 @@ public class DocumentService : IDocumentService
         if (!Enum.TryParse<DocumentType>(request.DocumentType, true, out var type))
             throw new DomainException($"Nieznany typ dokumentu: {request.DocumentType}");
 
+        if (type == DocumentType.Inventory && _currentUser.Role != UserRole.Manager)
+            throw new DomainException("Inwentaryzację może przeprowadzić wyłącznie kierownik.");
+
+        if (type == DocumentType.GoodsReceipt && _currentUser.Role == UserRole.Technician)
+            throw new DomainException("Przyjęcie zewnętrzne rejestruje magazynier lub kierownik.");
+
         await EnsureUserExistsAsync(request.CreatedByUserId, ct);
         await EnsureLocationExistsAsync(request.SourceLocationId, ct);
         await EnsureLocationExistsAsync(request.TargetLocationId, ct);

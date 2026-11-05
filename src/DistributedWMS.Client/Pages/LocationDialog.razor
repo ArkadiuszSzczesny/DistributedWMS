@@ -1,0 +1,105 @@
+﻿@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudSelect T="string" Label="Typ lokalizacji" Value="_type"
+                           ValueChanged="OnTypeChanged" Variant="Variant.Outlined" Required="true">
+                    <MudSelectItem T="string" Value="@("MainWarehouse")">Magazyn główny</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("MobileWarehouse")">Magazyn mobilny (samochód serwisowy)</MudSelectItem>
+                </MudSelect> 
+            </MudItem>      
+            
+            <MudItem xs="12" md="5">
+                <MudTextField @bind-Value="_code" Label="Kod lokalizacji"
+                              Variant="Variant.Outlined" Required="true"
+                              HelperText="np. MG-02, AUTO-03" />                          
+            </MudItem>
+                            
+            <MudItem xs="12" md="7">
+                <MudTextField @bind-Value="_name" Label="Nazwa"
+                              Variant="Variant.Outlined" Required="true"
+                              HelperText="np. Serwis mobilny nr 3" />
+            </MudItem>            
+
+            @if (IsMobile)
+            {
+                <MudItem xs="12" md="5">
+                    <MudTextField @bind-Value="_registrationNumber" Label="Numer rejestracyjny"
+                                  Variant="Variant.Outlined" Required="true"
+                                  HelperText="Wymagany dla magazynu mobilnego" />                          
+                </MudItem>
+            }
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Anuluj</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="@(_saving || !CanSubmit)" OnClick="SaveAsync">
+            Dodaj lokalizację
+        </MudButton>
+    </DialogActions>    
+</MudDialog>
+
+@code {
+        [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private string _type = "MobileWarehouse";
+    private string _code = string.Empty;
+    private string _name = string.Empty;
+    private string _registrationNumber = string.Empty;
+    private bool _saving;
+
+    private bool IsMobile => _type == "MobileWarehouse";
+
+    private bool CanSubmit =>
+        !string.IsNullOrWhiteSpace(_code)
+        && !string.IsNullOrWhiteSpace(_name)
+        && (!IsMobile || !string.IsNullOrWhiteSpace(_registrationNumber));
+
+    private void OnTypeChanged(string value)
+    {
+        _type = value;
+
+        if (!IsMobile)
+        {
+            _registrationNumber = string.Empty;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+
+        try
+        {
+            var request = new CreateLocationRequest(
+                _code, _name, _type,
+                IsMobile ? _registrationNumber : null);
+
+            var response = await Http.PostAsJsonAsync("api/locations", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add($"Dodano lokalizację: {_code.ToUpperInvariant()}", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+                return;
+            }
+
+            var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
+            Snackbar.Add(problem?.Detail ?? "Nie udało się dodać lokalizacji", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Błąd: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

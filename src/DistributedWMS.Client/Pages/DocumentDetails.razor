@@ -27,6 +27,26 @@ else
                        OnClick="PostAsync">
                    Zatwierdź dokument
             </MudButton>
+            @if (_confirmDelete)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           OnClick="DeleteAsync">
+                    Potwierdź usunięcie
+                </MudButton>
+                <MudButton Variant="Variant.Text"
+                           OnClick="@(() => _confirmDelete = false)">
+                    Anuluj
+                </MudButton>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           OnClick="@(() => _confirmDelete = true)">
+                    Usuń dokument
+                </MudButton>
+            }
         }
         <MudButton Variant="Variant.Text" OnClick="@(() => Navigation.NavigateTo("documents"))">
             Powrót
@@ -167,6 +187,7 @@ else
     private decimal _newQuantity = 1m;
     private decimal? _newPrice;
     private bool _posting;
+    private bool _confirmDelete;
 
     protected override async Task OnInitializedAsync()
     {
@@ -263,4 +284,18 @@ else
         "Cancelled" => Color.Error,
         _ => Color.Default
     };
+
+    private async Task DeleteAsync()
+    {
+        var response = await Http.DeleteAsync($"api/documents/{Id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Dokument został usunięty.", Severity.Success);
+            Navigation.NavigateTo("documents");
+            return;
+        }
+
+        await ShowProblemAsync(response);
+    }  
 }

@@ -2,37 +2,68 @@
 @attribute [Authorize]
 @inject HttpClient Http
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
-<PageTitle>Localizacje</PageTitle>
+<PageTitle>Lokalizacje</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-6">Lokalizacje magazynowe</MudText>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-6">
+    <MudText Typo="Typo.h4">Lokalizacje magazynowe</MudText>
+    <MudSpacer />
+    <AuthorizeView Roles="Manager" Context="auth">
+        <Authorized>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenDialogAsync">
+                Nowa lokalizacja
+            </MudButton>
+        </Authorized>
+    </AuthorizeView>
+</MudStack>
 
-<MudTable Items="_locations" Loading="_loading" Hover="true" Striped="true" Dense="true">
+<MudTable Items="_locations" Loading="_loading" Hover="true" Striped="true"
+          Dense="true" T="LocationDto">
     <HeaderContent>
         <MudTh>Kod</MudTh>
         <MudTh>Nazwa</MudTh>
         <MudTh>Typ</MudTh>
         <MudTh>Nr rejestracyjny</MudTh>
+        <MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Kod">@context.Code</MudTd>
+        <MudTd DataLabel="Kod"><strong>@context.Code</strong></MudTd>
         <MudTd DataLabel="Nazwa">@context.Name</MudTd>
         <MudTd DataLabel="Typ">
             <MudChip T="string" Size="Size.Small"
                      Color="@(context.Type == "MainWarehouse" ? Color.Primary : Color.Secondary)">
-               @(context.Type == "MainWarehouse" ? "Magazyn głowny" : "Magazyn mobilny")
+                @(context.Type == "MainWarehouse" ? "Magazyn główny" : "Magazyn mobilny")
             </MudChip>
         </MudTd>
-        <MudTd DataLabel="Nr rejestracyjny">@(context.VehicleRegistration ?? "-")</MudTd>
+        <MudTd DataLabel="Nr rejestracyjny">@(context.VehicleRegistration ?? "—")</MudTd>
+        <MudTd Style="text-align:right">
+            <AuthorizeView Roles="Manager" Context="auth">
+                <Authorized>
+                    <MudIconButton Icon="@Icons.Material.Filled.Block" Size="Size.Small"
+                                   Color="Color.Error" title="Wycofaj z użytku"
+                                   OnClick="@(() => DeactivateAsync(context))" />
+                </Authorized>
+            </AuthorizeView>
+        </MudTd>
     </RowTemplate>
+    <NoRecordsContent>
+        <MudText>Brak zdefiniowanych lokalizacji.</MudText>
+    </NoRecordsContent>
 </MudTable>
 
 @code {
     private IReadOnlyList<LocationDto> _locations = Array.Empty<LocationDto>();
     private bool _loading = true;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
     {
+        _loading = true;
+
         try
         {
             _locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/locations")
@@ -45,6 +76,43 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task OpenDialogAsync()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<LocationDialog>("Nowa lokalizacja", options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+            await LoadAsync();
+    }
+
+    private async Task DeactivateAsync(LocationDto location)
+    {
+        var response = await Http.DeleteAsync($"api/locations/{location.Id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add($"Wycofano lokalizację {location.Code}.", Severity.Success);
+            await LoadAsync();
+            return;
+        }
+
+        try
+        {
+            var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
+            Snackbar.Add(problem?.Detail ?? "Operacja nie powiodła się.", Severity.Error);
+        }
+        catch
+        {
+            Snackbar.Add("Operacja nie powiodła się.", Severity.Error);
         }
     }
 }
