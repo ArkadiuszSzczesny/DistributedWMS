@@ -1,0 +1,157 @@
+﻿@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_userName" Label="Nazwa użytkownika"
+                              Variant="Variant.Outlined" Required="true"
+                              Disabled="@IsEdit"
+                              HelperText="@(IsEdit ? "Nazwy użytkownika nie można zmienić" : "Login do systemu, np. serwisant3")" />
+            </MudItem>
+            @if (!IsEdit)
+            {
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" Label="Rola" Value="_role" ValueChanged="OnRoleChanged"
+                    Variant="Variant.Outlined" Required="true" Disabled="@IsEdit">
+                        <MudSelectItem T="string" Value="@("WarehouseOperator")">Magazynier</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Technician")">Serwisant</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Manager")">Kierownik</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            }
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_fullName" Label="Imię i nazwisko"
+                    Variant="Variant.Outlined" Required="true" />
+                </MudItem>
+             
+
+            @if (IsTechnician)
+            {
+                <MudItem xs="12">
+                    <MudSelect T="Guid?" Label="Przypisany magazyn mobilny"
+                               @bind-Value="_locationId" Variant="Variant.Outlined" Required="true">
+                        @foreach (var location in _mobileLocations)
+                        {
+                            <MudSelectItem T="Guid?" Value="@location.Id">
+                                @location.Code - @location.Name (@location.VehicleRegistration)
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>   
+            }
+
+            @if (!IsEdit)
+            {
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_password" Label="Hasło"
+                                  InputType="InputType.Password"
+                                  Variant="Variant.Outlined" Required="true"
+                                  HelperText="Minimum 8 znaków" />
+                </MudItem>
+            }
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Anuluj</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="@(_saving || !CanSubmit)" OnClick="SaveAsync">
+            @(IsEdit ? "Zapisz zmiany" : "Utwórz konto")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public UserDto? User { get; set; }
+
+    private IReadOnlyList<LocationDto> _mobileLocations = Array.Empty<LocationDto>();
+
+    private string _userName = string.Empty;
+    private string _fullName = string.Empty;
+    private string _role = "Technician";
+    private string _password = string.Empty;
+    private Guid? _locationId;
+    private bool _saving;
+
+    private bool IsEdit => User is not null;
+    private bool IsTechnician => _role == "Technician";
+
+    private bool CanSubmit =>
+        !string.IsNullOrWhiteSpace(_userName)
+        && !string.IsNullOrWhiteSpace(_fullName)
+        && (IsEdit || _password.Length >= 8)
+        && (!IsTechnician || _locationId is not null);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var all = await Http.GetFromJsonAsync<List<LocationDto>>("api/locations")
+                  ?? new List<LocationDto>();
+
+        _mobileLocations = all.Where(l => l.Type == "MobileWarehouse").ToList();
+
+        if (User is null)
+            return;
+
+        _userName = User.UserName;
+        _fullName = User.FullName;
+        _role = User.Role;
+        _locationId = User.AssignedLocationId;
+    }
+
+    private void OnRoleChanged(string value)
+    {
+        _role = value;
+
+        if (!IsTechnician)
+            _locationId = null;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+
+        try
+        {
+            HttpResponseMessage response;
+
+            if (IsEdit)
+            {
+                var request = new UpdateUserRequest(_fullName, _locationId);
+                response = await Http.PutAsJsonAsync($"api/users/{User!.Id}", request);
+            }
+            else
+            {
+                var request = new CreateUserRequest(
+                    _userName, _fullName, _password, _role, _locationId);
+
+                response = await Http.PostAsJsonAsync("api/users", request);
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add(IsEdit ? "Zapisano zmiany." : $"Utworzono konto {_userName.ToLowerInvariant()}",
+                    Severity.Success);
+
+                MudDialog.Close(DialogResult.Ok(true));
+                return;
+            }
+
+            var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
+            Snackbar.Add(problem?.Detail ?? "Nie udało się zapisać danych.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Błąd: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}
+

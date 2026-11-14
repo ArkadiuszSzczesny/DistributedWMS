@@ -16,11 +16,13 @@
 
         <MudTextField @bind-Value="_userName" Label="Nazwa użytkownika"
                       Variant="Variant.Outlined" Class="mb-4"
+                      Immediate="true"
                       OnKeyDown="OnKeyDown" />
 
         <MudTextField @bind-Value="_password" Label="Hasło"
                       InputType="InputType.Password"
                       Variant="Variant.Outlined" Class="mb-6"
+                      Immediate="true"
                       OnKeyDown="OnKeyDown" />
 
         <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"

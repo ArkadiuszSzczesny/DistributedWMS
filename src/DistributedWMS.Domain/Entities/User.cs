@@ -50,6 +50,20 @@ public class User : EntityBase
         AssignedLocation = location;
     }
 
+    public void SetFullName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            throw new DomainException("Imię i nazwisko nie może być puste.");
+
+        FullName = fullName.Trim();
+    }
+
+    public void ClearAssignedLocation()
+    {
+        AssignedLocationId = null;
+        AssignedLocation = null;
+    }
+
     public void SetPasswordHash(string hash) => PasswordHash = hash;
 
     public void Deactivate() => IsActive = false;

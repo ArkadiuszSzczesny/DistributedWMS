@@ -2,6 +2,7 @@
 using DistributedWMS.Application.Products;
 using DistributedWMS.Application.Stock;
 using DistributedWMS.Application.Documents;
+using DistributedWMS.Application.Users;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DistributedWMS.Application;
@@ -15,6 +16,7 @@ public static class  DependencyInjection
         services.AddScoped<IStockService, StockService>();
         services.AddScoped<IDocumentNumberGenerator, DocumentNumberGenerator>();
         services.AddScoped<IDocumentService, DocumentService>();
+        services.AddScoped<IUserService, UserService>();
         return services;
     }
 }

@@ -17,3 +17,16 @@ public record LoginResponse(
     string FullName,
     string Role,
     Guid? AssignedLocationId);
+
+public record CreateUserRequest(
+    string UserName,
+    string FullName,
+    string Password,
+    string Role,
+    Guid? AssignedLocationId);
+
+public record UpdateUserRequest(
+    string FullName,
+    Guid? AssignedLocationId);
+
+public record ChangePasswordRequest(string NewPassword);

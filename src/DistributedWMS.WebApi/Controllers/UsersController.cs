@@ -1,4 +1,5 @@
 ﻿using DistributedWMS.Application.Common.Interfaces;
+using DistributedWMS.Application.Users;
 using DistributedWMS.Shared.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,29 +13,56 @@ namespace DistributedWMS.WebApi.Controllers;
 [Produces("application/json")]
 public class UsersController : ControllerBase
 {
-    private readonly IWmsDbContext _db;
+    private readonly IUserService _users;
 
-    public UsersController(IWmsDbContext db) => _db = db;
+    public UsersController(IUserService users) => _users = users;
 
     /// <summary>Zwraca listę użytkowników wraz z przypisanymi magazynami mobilnymi.</summary>
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<UserDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAll(CancellationToken ct)
-    {
-        var users = await _db.Users
-            .AsNoTracking()
-            .Where(u => u.IsActive)
-            .OrderBy(u => u.Role)
-            .ThenBy(u => u.FullName)
-            .Select(u => new UserDto(
-                u.Id,
-                u.UserName,
-                u.FullName,
-                u.Role.ToString(),
-                u.AssignedLocationId,
-                u.AssignedLocation != null ? u.AssignedLocation.Code : null))
-            .ToListAsync(ct);
+    public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAll(
+        [FromQuery] bool onlyActive = true, CancellationToken ct = default)
+        => Ok(await _users.GetAllAsync(onlyActive, ct));
 
-        return Ok(users);
+    /// <summary>Zakłada konto pracownika</summary>
+    [HttpPost]
+    [Authorize(Roles = "Manager")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<UserDto>> Create(
+        [FromBody] CreateUserRequest request, CancellationToken ct)
+    {
+        var created = await _users.CreateAsync(request, ct);
+        return CreatedAtAction(nameof(GetAll), new { }, created);
+    }
+
+    /// <summry>Aktualizuje dane pracownika oraz przypisanie magazynu mobilnego</summary>
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Manager")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<UserDto>> Update(
+        Guid id, [FromBody] UpdateUserRequest request, CancellationToken ct)
+        => Ok(await _users.UpdateAsync(id, request, ct));
+
+    /// <summary>Ustawia nowe hasło użytkownika.</summary>
+    [HttpPut("{id:guid}/password")]
+    [Authorize(Roles = "Manager")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> ChangePassword(
+        Guid id, [FromBody] ChangePasswordRequest request, CancellationToken ct)
+    {
+        await _users.ChangePasswordAsync(id, request, ct);
+        return NoContent();
+    }
+
+    /// <summary>Wyłącza konto bez usuwania historii wystawionych dokumentów.</summary>
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Manager")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
+    {
+        await _users.DeactivateAsync(id, ct);
+        return NoContent();
     }
 }

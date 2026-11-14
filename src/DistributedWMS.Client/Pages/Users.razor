@@ -1,0 +1,147 @@
+﻿@page "/users"
+@attribute [Authorize(Roles = "Manager")]
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Pracownicy</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-6">
+    <MudText Typo="Typo.h4">Pracownicy</MudText>
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.PersonAdd"
+               OnClick="@(() => OpenDialogAsync())">
+        Nowe konto
+    </MudButton>
+</MudStack>
+
+<MudTable Items="_users" Loading="_loading" Hover="true" Striped="true"
+          Dense="true" T="UserDto">
+    <HeaderContent>
+        <MudTh>Login</MudTh>
+        <MudTh>Imię i nazwisko</MudTh>
+        <MudTh>Rola</MudTh>
+        <MudTh>Przypisany magazyn</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Login"><strong>@context.UserName</strong></MudTd>
+        <MudTd DataLabel="Imię i nazwisko">@context.FullName</MudTd>
+        <MudTd DataLabel="Rola">
+            <MudChip T="string" Size="Size.Small" Color="@RoleColor(context.Role)">
+                @RoleName(context.Role)
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Magazyn">@(context.AssignedLocationCode ?? "-")</MudTd>
+        <MudTd Style="text-align:right">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                           title="Edytuj dane"
+                           OnClick="@(() => OpenDialogAsync(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Key" Size="Size.Small"
+                           title="Zmień hasło"
+                           OnClick="@(() => OpenPasswordDialogAsync(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Block" Size="Size.Small"
+                           Color="Color.Error" title="Wyłącz konto"
+                           OnClick="@(() => DeactivateAsync(context))" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>Brak aktywnych kont.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    private IReadOnlyList<UserDto> _users = Array.Empty<UserDto>();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+
+        try
+        {
+            _users = await Http.GetFromJsonAsync<List<UserDto>>("api/users")
+                     ?? new List<UserDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Nie udało się pobrać listy pracowników: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenDialogAsync(UserDto? user = null)
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var parameters = new DialogParameters<UserDialog>
+        {
+            { x => x.User, user }
+        };
+
+        var title = user is null ? "Nowe konto pracownika" : $"Edycja: {user.FullName}";
+
+        var dialog = await DialogService.ShowAsync<UserDialog>(title, parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+            await LoadAsync();
+    }
+
+    private async Task OpenPasswordDialogAsync(UserDto user)
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+
+        var parameters = new DialogParameters<PasswordDialog>
+        {
+            { x => x.User, user }
+        };
+
+        await DialogService.ShowAsync<PasswordDialog>($"Hasło: {user.FullName}", parameters, options);
+    }
+
+    private async Task DeactivateAsync(UserDto user)
+    {
+        var response = await Http.DeleteAsync($"api/users/{user.Id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add($"Wyłączono konto {user.UserName}.", Severity.Success);
+            await LoadAsync();
+            return;
+        }
+
+        try
+        {
+            var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
+            Snackbar.Add(problem?.Detail ?? "Operacja nie powiodła się.", Severity.Error);
+        }
+        catch
+        {
+            Snackbar.Add("Operacja nie powiodła się.", Severity.Error);
+        }
+    }
+
+    private static string RoleName(string role) => role switch
+    {
+        "Manager" => "Kierownik",
+        "WarehouseOperator" => "Magazynier",
+        "Technician" => "Serwisant",
+        _ => role
+    };
+
+    private static Color RoleColor(string role) => role switch
+    {
+        "Manager" => Color.Primary,
+        "WarehouseOperator" => Color.Info,
+        "Technician" => Color.Secondary,
+        _ => Color.Default
+    };
+}
+                             
