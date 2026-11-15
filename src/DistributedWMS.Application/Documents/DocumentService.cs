@@ -25,7 +25,6 @@ public class DocumentService : IDocumentService
     }
 
     //------ odczyt ------
-
     public async Task<IReadOnlyList<DocumentListItemDto>> GetAllAsync(
         string? type = null, string? status = null, CancellationToken ct = default)
     {
@@ -61,7 +60,6 @@ public class DocumentService : IDocumentService
     }
 
     // ------ modyfikacja dokumentu roboczego ------
-
     public async Task<DocumentDetailsDto> CreateAsync(CreateDocumentRequest request, CancellationToken ct = default)
     {
         if (!Enum.TryParse<DocumentType>(request.DocumentType, true, out var type))
@@ -199,7 +197,6 @@ public class DocumentService : IDocumentService
     }
 
     // ------ operacje na stanach ------
-
     private async Task IncreaseStockAsync(Guid productId, Guid locationId, decimal quantity, CancellationToken ct)
     {
         var stock = await GetOrCreateStockAsync(productId, locationId, ct);
@@ -211,13 +208,21 @@ public class DocumentService : IDocumentService
         var stock = await _db.StockItems
             .FirstOrDefaultAsync(s => s.ProductId == productId && s.LocationId == locationId, ct);
 
+        var product = await _db.Products.AsNoTracking().FirstAsync(p => p.Id == productId, ct);
+        var location = await _db.Locations.AsNoTracking().FirstAsync(l => l.Id == locationId, ct);
+
         if (stock is null)
         {
-            var product = await _db.Products.AsNoTracking().FirstAsync(p => p.Id == productId, ct);
-            var location = await _db.Locations.AsNoTracking().FirstAsync(l => l.Id == locationId, ct);
-
             throw new DomainException(
                 $"Towar {product.Sku} nie występuje w lokalizacji {location.Code}. Rozchód jest niemożliwy.");
+        }
+
+        if (stock.Quantity < quantity)
+        {
+            throw new DomainException(
+                $"Niewystarczający stan towaru {product.Sku} ({product.Name}). " +
+                $"Dostępne: {stock.Quantity:N3} {product.UnitOfMeasure}, " +
+                $"żądane: {quantity:N3} {product.UnitOfMeasure}.");
         }
 
         stock.Decrease(quantity);
@@ -248,7 +253,6 @@ public class DocumentService : IDocumentService
     }
 
     // ------ metody pomocnicze ------
-
     private async Task<Document> LoadFullAsync(Guid id, bool tracking, CancellationToken ct)
     {
         var query = _db.Documents

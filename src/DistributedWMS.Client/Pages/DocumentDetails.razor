@@ -191,10 +191,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _products = await Http.GetFromJsonAsync<List<ProductDto>>("api/products")
-                    ?? new List<ProductDto>();
-
         await LoadDocumentAsync();
+        await LoadProductsAsync();
     }
 
     private async Task LoadDocumentAsync()
@@ -207,6 +205,26 @@ else
         {
             Snackbar.Add($"Nie udało się pobrać dokumentu: {ex.Message}", Severity.Error);
         }
+    }
+
+    private async Task LoadProductsAsync()
+    {
+        if (_document?.SourceLocationId is not null)
+        {
+            var stock = await Http.GetFromJsonAsync<List<StockItemDto>>(
+                $"api/stock/location/{_document.SourceLocationId}")
+                ?? new List<StockItemDto>();
+
+            _products = stock
+                .Select(s => new ProductDto(
+                    s.ProductId, s.Sku, s.ProductName, null, s.UnitOfMeasure, 0m, true))
+                .ToList();
+
+            return;
+        }
+
+        _products = await Http.GetFromJsonAsync<List<ProductDto>>("api/products")
+                    ?? new List<ProductDto>();
     }
 
     private async Task AddLineAsync()

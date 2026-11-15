@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Elementy rozwiązania/">
     <File Path="docker-compose.yml" />
+    <File Path="README.md" />
   </Folder>
   <Project Path="src/DistributedWMS.Application/DistributedWMS.Application.csproj" />
   <Project Path="src/DistributedWMS.Client/DistributedWMS.Client.csproj" />
