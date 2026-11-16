@@ -21,6 +21,15 @@ Ochrona poprawności stanów magazynowych realizowana jest na czterech niezależ
 
 | Poziom | Mechanizm |
 | --- | --- |
+| Model domenowy | metoda `StockItem.Decrease` odrzuca rozchód przekraczający stan |
+| Warstwa aplikacji | transakcja obejmująca wszystkie zmiany dokumentu |
+| Współbieżność | blokada optymistyczna na kolumnie systemowej `xmin` |
+| Baza danych | ograniczenie `CHECK ("Quantity" >= 0)` |
+
+## Wykorzystane technologie
+
+| Warstwa | Technologia |
+| --- | --- |
 | Backend | .NET 10, ASP.NET Core Web API |
 | Architektura | Clean Architecture (Domain, Application, Infrastructure, WebApi) |
 | Dostęp do danych | Entity Framework Core 10, podejście Code-First |
@@ -38,8 +47,8 @@ DistributedWMS/
 |── docker-compose.yml
 |── src/
 |	|── DistributedWMS.Domain/			encje i reguły biznesowe
-|	|── DistributedWMS.Application/		przypadki użycia, kontrakty serwisów
-|	|── DistributedWMS.Infrastructure/	EF Core, uwierzytelnianie
+|	|── DistributedWMS.Application/			przypadki użycia, kontrakty serwisów
+|	|── DistributedWMS.Infrastructure/		EF Core, uwierzytelnianie
 |	|── DistributedWMS.Shared/			kontrakty DTO wspólne dla API i klienta
 |	|── DistributedWMS.WebApi/			kontrolery REST
 |	└── DistributedWMS.Client/			aplikacja Blazor WebAssembly
@@ -57,10 +66,10 @@ Wymagania: .NET 10 SDK, Docker Desktop, Visual Studio.
 	docker compose up -d
 	```
 
-2. Otwórz 'DistributedWMS.sln' w Visual Studio.
+2. Otwórz `DistributedWMS.sln` w Visual Studio.
 
-3. Ustaw wiele projektów startowych ('DistributedWMS.WebApi'
-	oraz 'DistributedWMS.Client') i uruchom klawiszem F5.
+3. Ustaw wiele projektów startowych (`DistributedWMS.WebApi`
+	oraz `DistributedWMS.Client`) i uruchom klawiszem F5.
 
 Migracje bazy danych oraz dane początkowe stosowane są automatycznie
 przy pierwszym uruchomieniu aplikacji.
@@ -87,5 +96,5 @@ przy pierwszym uruchomieniu aplikacji.
 
 Repozytorium zawiera poświadczenia bazy danych oraz klucz podpisu tokenów w plikach konfiguracyjnych.
 Jest to rozwiązanie przyjęte na potrzeby środowiska deweloperskiego i prezentacji projektu. We wdrożeniu
-produkcyjnym wratości te należy przenieść do zmiennych środowiskowych lub menezera sekretó, a polityka
+produkcyjnym wartości te należy przenieść do zmiennych środowiskowych lub menedżera sekretów, a polityka
 CORS powinna wskazywać konkretny adres aplikacji klienckiej zamiast zezwalać na dowolne źródło.
