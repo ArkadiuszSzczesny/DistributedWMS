@@ -11,5 +11,4 @@ public interface ICurrentUser
     Guid? UserId { get; }
     UserRole? Role { get; }
     Guid? AssignedLocationId { get; }
-    bool IsAuthenticated { get; }
- }
+}

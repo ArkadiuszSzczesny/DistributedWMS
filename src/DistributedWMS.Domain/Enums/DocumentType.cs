@@ -1,8 +1,8 @@
 ﻿namespace DistributedWMS.Domain.Enums;
 
-///<summary>
-///Typy dokumentów magazynowych zgodne z praktyką gospodarki magazynowej.
-///</summary>
+/// <summary>
+/// Typy dokumentów magazynowych zgodne z praktyką gospodarki magazynowej.
+/// </summary>
 public enum DocumentType
 {
     /// <summary>PZ - przyjęcie zewnętrzne, dostawa od dostawcy na magazyn główny.</summary>

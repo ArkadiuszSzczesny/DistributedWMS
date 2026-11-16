@@ -6,9 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Tokens.Experimental;
 using DistributedWMS.Infrastructure.Persistence;
-
+using DistributedWMS.Application.Common.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,11 +46,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = jwt["Issuer"],
             ValidAudience = jwt["Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwt["Key"]!))
+                Encoding.UTF8.GetBytes(jwt["Key"]!))
         };
     });
 
-builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -59,8 +58,10 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<WmsDbContext>();
+    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+
     await db.Database.MigrateAsync();
-    await DatabaseSeeder.SeedAsync(db);
+    await DatabaseSeeder.SeedAsync(db, hasher);
 }
 
 app.UseExceptionHandler();
@@ -74,7 +75,6 @@ if (app.Environment.IsDevelopment())
         options.Theme = ScalarTheme.BluePlanet;
     });
 }
-
 
 app.UseHttpsRedirection();
 app.UseCors("BlazorClient");

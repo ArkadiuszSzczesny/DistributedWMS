@@ -7,8 +7,7 @@ public record ProductDto(
     string Name,
     string? Description,
     string UnitOfMeasure,
-    decimal MinimumStock,
-    bool IsActive);
+    decimal MinimumStock);
 
 public record CreateProductRequest(
     string Sku,

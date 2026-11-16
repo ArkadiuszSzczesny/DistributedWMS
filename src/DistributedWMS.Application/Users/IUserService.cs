@@ -2,6 +2,9 @@
 
 namespace DistributedWMS.Application.Users;
 
+/// <summary>
+/// Zarządzanie kontami pracowników oraz przypisaniem magazynow mobilmych
+/// </summary>
 public interface IUserService
 {
     Task<IReadOnlyList<UserDto>> GetAllAsync(bool onlyActive = true, CancellationToken ct = default);

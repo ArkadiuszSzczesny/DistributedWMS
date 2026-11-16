@@ -32,7 +32,6 @@ public record DocumentDetailsDto(
     DateTime? PostedAtUtc,
     Guid? SourceLocationId,
     string? SourceLocationCode,
-    Guid? TargetLocationId,
     string? TargetLocationCode,
     string CreatedByUserName,
     string? Reference,

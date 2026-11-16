@@ -1,5 +1,4 @@
 ﻿using DistributedWMS.Application.Documents;
-using DistributedWMS.Domain.Entities;
 using DistributedWMS.Shared.Documents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,13 +24,14 @@ public class DocumentsController : ControllerBase
         CancellationToken ct = default)
         => Ok(await _documents.GetAllAsync(type, status, ct));
 
+    /// <summary>Zwraca pełną treść dokumentu wraz z pozycjami.</summary> 
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(DocumentDetailsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<DocumentListItemDto>> GetById(Guid id, CancellationToken ct)
+    public async Task<ActionResult<DocumentDetailsDto>> GetById(Guid id, CancellationToken ct)
         => Ok(await _documents.GetByIdAsync(id, ct));
 
-    /// <summary>Tworzy dokument roboczy. Numer nadwany jest automatycznie.</summary>
+    /// <summary>Tworzy dokument roboczy. Numer nadawany jest automatycznie.</summary>
     [Authorize(Roles = "WarehouseOperator,Technician,Manager")]
     [HttpPost]
     [ProducesResponseType(typeof(DocumentDetailsDto), StatusCodes.Status201Created)]
@@ -49,8 +49,9 @@ public class DocumentsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<DocumentDetailsDto>> AddLine(
         Guid id, [FromBody] AddDocumentLineRequest request, CancellationToken ct)
-    => Ok(await _documents.AddLineAsync(id, request, ct));
+        => Ok(await _documents.AddLineAsync(id, request, ct));
 
+    /// <summary>Usuwa pozycję z dokumentu roboczego.</summary>
     [HttpDelete("{id:guid}/lines/{lineId:guid}")]
     [ProducesResponseType(typeof(DocumentDetailsDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<DocumentDetailsDto>> RemoveLine(
@@ -62,11 +63,12 @@ public class DocumentsController : ControllerBase
     /// Niewystarczający stan w lokalizacji źródłowej powoduje odrzucenie całej operacji.
     /// </summary>
     [HttpPost("{id:guid}/post")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(DocumentDetailsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<DocumentDetailsDto>> Post(Guid id, CancellationToken ct)
         => Ok(await _documents.PostAsync(id, ct));
 
+    /// <summary>Usuwa dokument roboczy, który nie wpłynął na stany magazynowe.</summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

@@ -10,6 +10,6 @@ public interface IStockService
     /// <summary>Rozmieszczenie jednego towaru we wszystkich lokalizacjach.</summary>
     Task<IReadOnlyList<StockItemDto>> GetByProductAsync(Guid productId, CancellationToken ct = default);
 
-    /// <summary>Raport braków - towary o stanie łącznym poniżej progu minimalnego.</summary>
+    /// <summary>Raport braków — towary o stanie łącznym poniżej progu minimalnego.</summary>
     Task<IReadOnlyList<StockSummaryDto>> GetBelowMinimumAsync(CancellationToken ct = default);
 }

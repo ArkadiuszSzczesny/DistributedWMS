@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-
 namespace DistributedWMS.Infrastructure.Persistence.Configurations;
 
 public class DocumentLineConfiguration : IEntityTypeConfiguration<DocumentLine>
@@ -27,8 +26,5 @@ public class DocumentLineConfiguration : IEntityTypeConfiguration<DocumentLine>
             .WithMany()
             .HasForeignKey(x => x.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Ignore(x => x.LineValue);
-
     }
 }

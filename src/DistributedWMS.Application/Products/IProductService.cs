@@ -2,6 +2,9 @@
 
 namespace DistributedWMS.Application.Products;
 
+/// <summary>
+/// Zarządzanie kartoteką towarową: asortymentem i progami stanów mininalnych.
+/// </summary>
 public interface IProductService
 {
     Task<IReadOnlyList<ProductDto>> GetAllAsync(bool onlyActive = true, CancellationToken ct = default);

@@ -6,8 +6,8 @@ namespace DistributedWMS.Application.Common.Interfaces;
 
 /// <summary>
 /// Kontrakt dostępu do danych wykorzystywany przez warstwę aplikacji.
-/// Umożliwia odseparowanie logiki biznesowej od konkretnej implementacji
-/// kontekstu bazy danych oraz podstawienie atrapy w testach jednostkowych.
+/// Odseparowuje logikę biznesową od konkretnej implementacji kontekstu
+/// bazy damych, umożliwiając zmianę dostawcy bez modyfikacji serwisów.
 /// </summary>
 public interface IWmsDbContext
 {
@@ -20,7 +20,7 @@ public interface IWmsDbContext
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>Rozpoczyna jawną transakcję bazodanową obejmującą wiele operacji zapisu. </summary>
+    /// <summary>Rozpoczyna jawną transakcję bazodanową obejmującą wiele operacji zapisu.</summary>
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
 }
 

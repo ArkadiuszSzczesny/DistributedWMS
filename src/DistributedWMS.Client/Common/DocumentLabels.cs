@@ -5,16 +5,7 @@
 /// na oznaczenia stosowane w praktyce magazynowej.
 /// </summary>
 public static class DocumentLabels
-{
-    public static string TypeSymbol(string type) => type switch
-    {
-        "GoodsReceipt" => "PZ",
-        "StockTransfer" => "MM",
-        "InternalIssue" => "RW",
-        "Inventory" => "IN",
-        _ => type
-    };
-
+{   
     public static string TypeName(string type) => type switch
     {
         "GoodsReceipt" => "Przyjęcie zewnętrzne",
@@ -23,11 +14,11 @@ public static class DocumentLabels
         "Inventory" => "Inwentaryzacja",
         _ => type
     };
+
     public static string StatusName(string status) => status switch
     {
         "Draft" => "Roboczy",
         "Posted" => "Zatwierdzony",
-        "Cancelled" => "Anulowany",
         _ => status
     };
 }

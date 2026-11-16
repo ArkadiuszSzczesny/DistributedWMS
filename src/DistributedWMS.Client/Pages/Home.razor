@@ -41,16 +41,36 @@
     <MudItem xs="12" md="4">
         <MudCard>
             <MudCardContent>
-                <MudText Typo="Typo.subtitle1">Raport braków</MudText>
+                <MudText Typo="Typo.subtitle1">Dokumenty magazynowe</MudText>
                 <MudText Typo="Typo.body2" Class="mt-2">
-                    Towary o stanie łącznym poniżej progu minimalnego.
+                    Przyjęcia, przesunięcia międzymagazynowe i rozliczenie zużycia.
                 </MudText>
             </MudCardContent>
             <MudCardActions>
-                <MudButton Href="shortages" Variant="Variant.Text" Color="Color.Primary">
+                <MudButton Href="documents" Variant="Variant.Text" Color="Color.Primary">
                     Przejdź
                 </MudButton>
             </MudCardActions>
         </MudCard>
     </MudItem>
+  
+    <MudItem xs="12" md="4">
+        <AuthorizedView Roles="Manager,WarehouseOperator" Context="auth">
+            <Authorized>
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle1">Raport braków</MudText>
+                        <MudText Typo="Typo.body2" Class="mt-2">
+                            Towary o stanie łącznym poniżej progu minimalnego.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Href="shortages" Variant="Variant.Text" Color="Color.Primary">
+                            Przejdź
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </Authorized>
+        </AuthorizedView>
+    </MudItem>   
 </MudGrid>

@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-
 namespace DistributedWMS.Infrastructure.Persistence.Configurations;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
@@ -24,12 +23,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion<string>()
             .HasMaxLength(30);
 
-        // Relacja 1:1 - jeden samochód może być przypisany tylko jednemu serwisantowi.
+        // Relacja 1:1 — jeden samochód może być przypisany tylko jednemu serwisantowi.
         builder.HasOne(x => x.AssignedLocation)
             .WithOne()
             .HasForeignKey<User>(x => x.AssignedLocationId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
-
- 

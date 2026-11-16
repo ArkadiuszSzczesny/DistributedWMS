@@ -5,8 +5,7 @@ public record LocationDto(
     string Code,
     string Name,
     string Type,
-    string? VehicleRegistration,
-    bool IsActive);
+    string? VehicleRegistration);
 
 public record CreateLocationRequest(
     string Code,

@@ -1,6 +1,6 @@
 ﻿namespace DistributedWMS.Domain.Enums;
 
-///<summary>Rodzaj lokalizacji magazynowej w strukturze rozproszonej</summary>
+/// <summary>Rodzaj lokalizacji magazynowej w strukturze rozproszonej</summary>
 public enum LocationType
 {
     /// <summary>Magazyn główny - stacjonarny, przyjmuje dostawy zewnętrzne</summary>

@@ -1,22 +1,21 @@
 ﻿using DistributedWMS.Domain.Common;
 using DistributedWMS.Domain.Exceptions;
-using System.Formats.Asn1;
 
 namespace DistributedWMS.Domain.Entities;
 
-///<summary>
-///Stan magazynowy - ilość konkretnego towaru w konkretnej lokalizacji.
-///Encja nigdy nie jest modyfikowana bezpośrednio przez użytkownika;
-///zmiany następują wyłącznie w wyniku zatwierdzania dokumentu magazynowego.
-///</summary>
-public class  StockItem : EntityBase
+/// <summary>
+/// Stan magazynowy - ilość konkretnego towaru w konkretnej lokalizacji.
+/// Encja nigdy nie jest modyfikowana bezpośrednio przez użytkownika;
+/// zmiany następują wyłącznie w wyniku zatwierdzania dokumentu magazynowego.
+/// </summary>
+public class StockItem : EntityBase
 {
     private StockItem() { }
 
     public StockItem(Guid productId, Guid locationId, decimal quantity = 0m)
     {
         if(quantity < 0)
-            throw new DomainException("Stan magazynowy nie może być ujemny.");
+            throw new DomainException("Stan początkowy nie może być ujemny.");
 
         ProductId = productId;
         LocationId = locationId;
@@ -31,13 +30,13 @@ public class  StockItem : EntityBase
 
     public decimal Quantity { get; private set; }
 
-    ///<summary>
-    ///Znacznik wersji wiersza wykorzystywany do blokady optymistycznej.
-    ///Mapowany na systemową kolumnę xmin PostgreSQL (konfugiracja w warstwie Infrastructure).
-    ///</summary>
+    /// <summary>
+    /// Znacznik wersji wiersza wykorzystywany do blokady optymistycznej.
+    /// Mapowany na systemową kolumnę xmin PostgreSQL (konfiguracja w warstwie Infrastructure).
+    /// </summary>
     public uint RowVersion { get; private set; }
 
-    ///<summary>Zwiększa stan magazynowy. Stosowane przy przyjęciu oraz przy odbiorze przesunięcia.</summary>
+    /// <summary>Zwiększa stan magazynowy. Stosowane przy przyjęciu oraz przy odbiorze przesunięcia.</summary>
     public void Increase(decimal quantity)
     {
         if (quantity <= 0)
@@ -47,10 +46,10 @@ public class  StockItem : EntityBase
         ModifiedAtUtc = DateTime.UtcNow;
     }
 
-    ///<summary>
-    ///Zmniejsza stan magazynowy. Uniemożliwia powstanie stanu ujemnego,
-    ///realizując wymagane odporności systemu na błędy w stanach magazynowych.
-    ///</summary>
+    /// <summary>
+    /// Zmniejsza stan magazynowy. Uniemożliwia powstanie stanu ujemnego,
+    /// realizując wymaganie odporności systemu na błędy w stanach magazynowych.
+    /// </summary>
     public void Decrease(decimal quantity)
     {
         if (quantity <= 0)
@@ -64,7 +63,7 @@ public class  StockItem : EntityBase
         ModifiedAtUtc = DateTime.UtcNow;
     }
 
-    ///<summary>Ustawia stan wprost - wyłącznie na potrzeby inwentaryzacji.</summary>
+    /// <summary>Ustawia stan wprost - wyłącznie na potrzeby inwentaryzacji.</summary>
     public void SetQuantity(decimal quantity)
     {
         if (quantity < 0)

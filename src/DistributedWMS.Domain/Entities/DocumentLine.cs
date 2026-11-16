@@ -3,7 +3,7 @@ using DistributedWMS.Domain.Exceptions;
 
 namespace DistributedWMS.Domain.Entities;
 
-///<summary>Pozycja dokumentu magazynowego - pojedynczy towar wraz z ilością.</summary>
+/// <summary>Pozycja dokumentu magazynowego - pojedynczy towar wraz z ilością.</summary>
 public class DocumentLine : EntityBase
 {
     private DocumentLine() { }
@@ -28,10 +28,8 @@ public class DocumentLine : EntityBase
 
     public decimal Quantity { get; private set; }
 
-    ///<summary>Cena jednostkowa - wypełniana przy przyjęciu zewnętrznym, opcjonalna dla pozostałych typów.</summary>
+    /// <summary>Cena jednostkowa - wypełniana przy przyjęciu zewnętrznym, opcjonalna dla pozostałych typów.</summary>
     public decimal? UnitPrice { get; private set; }
-
-    public decimal? LineValue => UnitPrice * Quantity;
 
     public void ChangeQuantity(decimal quantity)
     {

@@ -5,7 +5,6 @@ using DistributedWMS.Domain.Exceptions;
 using DistributedWMS.Domain.Enums;
 using DistributedWMS.Shared.Locations;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
 
 namespace DistributedWMS.Application.Locations;
 
@@ -26,7 +25,7 @@ public class LocationService : ILocationService
             .OrderBy(l => l.Type)
             .ThenBy(l => l.Code)
             .Select(l => new LocationDto(
-                l.Id, l.Code, l.Name, l.Type.ToString(), l.VehicleRegistration, l.IsActive))
+                l.Id, l.Code, l.Name, l.Type.ToString(), l.VehicleRegistration))
             .ToListAsync(ct);
     }
 
@@ -41,12 +40,12 @@ public class LocationService : ILocationService
     public async Task<LocationDto> CreateAsync(CreateLocationRequest request, CancellationToken ct = default)
     {
         if (!Enum.TryParse<LocationType>(request.Type, ignoreCase: true, out var type))
-            throw new DomainException($"Nieprawidłowy typ lokalizacji '{request.Type}'.");
+            throw new DomainException($"Nieprawidłowy typ lokalizacji {request.Type}.");
 
         var code = request.Code.Trim().ToUpperInvariant();
 
         if (await _db.Locations.AnyAsync(l => l.Code == code, ct))
-            throw new DomainException($"Lokalizacja z kodem '{code}' już istnieje.");
+            throw new DomainException($"Lokalizacja z kodem {code} już istnieje.");
 
         var location = new Location(request.Code, request.Name, type);
         
@@ -73,10 +72,19 @@ public class LocationService : ILocationService
         if (hasStock)
             throw new DomainException("Nie można wycofać lokalizacji, w której znajduje się towar.");
 
+        var assignedUser = await _db.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.AssignedLocationId == id && u.IsActive, ct);
+
+        if (assignedUser is not null)
+            throw new DomainException(
+                $"Lokalizacja jest przypisana użytkownikowi {assignedUser.FullName}. " +
+                "Przypisz go do innego magazynu przed wycofaniem.");
+
         location.Deactivate();
         await _db.SaveChangesAsync(ct);
     }
 
     private static LocationDto Map(Location l) => new(
-        l.Id, l.Code, l.Name, l.Type.ToString(), l.VehicleRegistration, l.IsActive);
+        l.Id, l.Code, l.Name, l.Type.ToString(), l.VehicleRegistration);
 }

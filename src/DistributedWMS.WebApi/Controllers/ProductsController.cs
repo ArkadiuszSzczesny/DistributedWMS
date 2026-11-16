@@ -29,9 +29,9 @@ public class ProductsController : ControllerBase
     public async Task<ActionResult<ProductDto>> GetById(Guid id, CancellationToken ct)
         => Ok(await _products.GetByIdAsync(id, ct));
 
-    /// <summary> Dodaje nowy towar do kartoteki.</summary>
-    [Authorize(Roles = "Manager")]
+    /// <summary>Dodaje nowy towar do kartoteki.</summary>
     [HttpPost]
+    [Authorize(Roles = "Manager")]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ProductDto>> Create(
@@ -41,7 +41,7 @@ public class ProductsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
-    /// <summary>Aktualizuje dane towaru.</summary.>
+    /// <summary>Aktualizuje dane towaru.</summary>
     [Authorize(Roles = "Manager")]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
@@ -59,5 +59,4 @@ public class ProductsController : ControllerBase
         await _products.DeactivateAsync(id, ct);
         return NoContent();
     }
-     
  }

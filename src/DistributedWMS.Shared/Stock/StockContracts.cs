@@ -6,7 +6,6 @@ public record StockItemDto(
     string Sku,
     string ProductName,
     string UnitOfMeasure,
-    Guid LocationId,
     string LocationCode,
     string LocationName,
     decimal Quantity);
@@ -23,7 +22,6 @@ public record StockSummaryDto(
     decimal MinimumStock,
     decimal TotalQuantity)
 
-{
-    public decimal Shortage => MinimumStock - TotalQuantity;
-    public bool IsBelowMinimum => TotalQuantity < MinimumStock;
-}
+    {
+        public decimal Shortage => MinimumStock - TotalQuantity;
+    }

@@ -4,10 +4,10 @@ using DistributedWMS.Domain.Exceptions;
 
 namespace DistributedWMS.Domain.Entities;
 
-///<summary>
-///Lokalizacja magazynowa w strukturze rozproszonej: magazyn główny
-///lub magazyn mobilny odpowiadający samochodowi serwisowemu.
-///</summary>
+/// <summary>
+/// Lokalizacja magazynowa w strukturze rozproszonej: magazyn główny
+/// lub magazyn mobilny odpowiadający samochodowi serwisowemu.
+/// </summary>
 public class Location : EntityBase
 {
     private Location() { }
@@ -25,14 +25,14 @@ public class Location : EntityBase
         IsActive = true;
     }
 
-    ///<summary>Kod lokalizacji, np. MG-01 dla magazynu głównego, AUTO-KR501 dla samochodu</summary>
+    /// <summary>Kod lokalizacji, np. MG-01 dla magazynu głównego, AUTO-01 dla samochodu</summary>
     public string Code { get; private set; } = null!;
 
     public string Name { get; private set; } = null!;
 
     public LocationType Type { get; private set; }
 
-    ///<summary>Numer rejestracyjny - wypełniany wyłącznie dla magazynów mobilnyxh.</summary>
+    /// <summary>Numer rejestracyjny - wypełniany wyłącznie dla magazynów mobilnyxh.</summary>
     public string? VehicleRegistration { get; set; }
 
     public bool IsActive { get; private set; }

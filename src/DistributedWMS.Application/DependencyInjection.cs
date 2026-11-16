@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DistributedWMS.Application;
 
-public static class  DependencyInjection
+public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
@@ -17,6 +17,7 @@ public static class  DependencyInjection
         services.AddScoped<IDocumentNumberGenerator, DocumentNumberGenerator>();
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IUserService, UserService>();
+
         return services;
     }
 }

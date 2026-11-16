@@ -1,9 +1,7 @@
-﻿using DistributedWMS.Application.Common.Interfaces;
-using DistributedWMS.Application.Users;
+﻿using DistributedWMS.Application.Users;
 using DistributedWMS.Shared.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace DistributedWMS.WebApi.Controllers;
 
@@ -24,19 +22,19 @@ public class UsersController : ControllerBase
         [FromQuery] bool onlyActive = true, CancellationToken ct = default)
         => Ok(await _users.GetAllAsync(onlyActive, ct));
 
-    /// <summary>Zakłada konto pracownika</summary>
+    /// <summary>Zakłada konto pracownika.</summary>
     [HttpPost]
     [Authorize(Roles = "Manager")]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UserDto>> Create(
         [FromBody] CreateUserRequest request, CancellationToken ct)
     {
         var created = await _users.CreateAsync(request, ct);
-        return CreatedAtAction(nameof(GetAll), new { }, created);
+        return Ok(created);
     }
 
-    /// <summry>Aktualizuje dane pracownika oraz przypisanie magazynu mobilnego</summary>
+    /// <summary>Aktualizuje dane pracownika oraz przypisanie magazynu mobilnego.</summary>
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "Manager")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]

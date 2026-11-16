@@ -2,6 +2,10 @@
 
 namespace DistributedWMS.Application.Locations;
 
+/// <summary>
+/// Zarządzanie lokalizacjami magazynowymi: magazynem głównym
+/// oraz magazynami mobilnymi przypisanymi do samochodów serwisowych.
+/// </summary>
 public interface ILocationService
 {
     Task<IReadOnlyList<LocationDto>> GetAllAsync(bool onlyActive = true, CancellationToken ct = default);

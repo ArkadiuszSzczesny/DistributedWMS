@@ -10,8 +10,8 @@ public class StockService : IStockService
 
     public StockService(IWmsDbContext db) => _db = db;
 
-    public async Task<IReadOnlyList<StockItemDto>> GetByLocationAsync
-        (Guid locationId, bool skipZero = true, CancellationToken ct = default)
+    public async Task<IReadOnlyList<StockItemDto>> GetByLocationAsync(
+        Guid locationId, bool skipZero = true, CancellationToken ct = default)
     {
         var query = _db.StockItems
             .AsNoTracking()
@@ -27,12 +27,12 @@ public class StockService : IStockService
                 s.Product.Sku,
                 s.Product.Name,
                 s.Product.UnitOfMeasure,
-                s.LocationId,
                 s.Location.Code,
                 s.Location.Name,
                 s.Quantity))
             .ToListAsync(ct);
     }
+
     public async Task<IReadOnlyList<StockItemDto>> GetByProductAsync(Guid productId, CancellationToken ct = default)
     {
         return await _db.StockItems
@@ -45,15 +45,14 @@ public class StockService : IStockService
                 s.Product.Sku,
                 s.Product.Name,
                 s.Product.UnitOfMeasure,
-                s.LocationId,
                 s.Location.Code,
                 s.Location.Name,
                 s.Quantity))
-            .ToListAsync(ct); ;
+            .ToListAsync(ct);
     }
     public async Task<IReadOnlyList<StockSummaryDto>> GetBelowMinimumAsync(CancellationToken ct = default)
     {
-        // Sumowanie stanów ze wszystkich lokalizacji wykonywane jest po stronie bazy danych.  
+        // Sumowanie stanów ze wszystkich lokalizacji wykonywane jest po stronie bazy danych.
         var rows = await _db.Products
             .AsNoTracking()
             .Where(p => p.IsActive && p.MinimumStock > 0)
@@ -76,6 +75,5 @@ public class StockService : IStockService
             .Select(x => new StockSummaryDto(
                 x.Id, x.Sku, x.Name, x.UnitOfMeasure, x.MinimumStock, x.Total))
             .ToList();
-
     }
 }

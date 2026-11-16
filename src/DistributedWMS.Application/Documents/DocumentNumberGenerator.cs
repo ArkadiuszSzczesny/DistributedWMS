@@ -1,7 +1,6 @@
 ﻿using DistributedWMS.Application.Common.Interfaces;
 using DistributedWMS.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.CompilerServices;
 
 namespace DistributedWMS.Application.Documents;
 
@@ -37,7 +36,8 @@ public class DocumentNumberGenerator : IDocumentNumberGenerator
                 next = parsed + 1;
             }
         }
-            return $"{pattern}{next:D4}";
+
+        return $"{pattern}{next:D4}";
     }
 
     /// <summary>Symbole zgodne z polską praktyką obrotu magazynowego.</summary>
@@ -49,5 +49,4 @@ public class DocumentNumberGenerator : IDocumentNumberGenerator
         DocumentType.Inventory => "IN",
         _ => "DOK"
     };
-
 }

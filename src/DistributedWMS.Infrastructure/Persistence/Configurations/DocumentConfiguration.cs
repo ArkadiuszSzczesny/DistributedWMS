@@ -8,7 +8,7 @@ public class DocumentConfiguration : IEntityTypeConfiguration<Document>
 {
     public void Configure(EntityTypeBuilder<Document> builder)
     {
-        builder.ToTable("Documents", t=>
+        builder.ToTable("Documents", t =>
         {
             t.HasCheckConstraint(
                 "CK_Documents_DifferentLocations",

@@ -11,7 +11,7 @@ public class StockItemConfiguration : IEntityTypeConfiguration<StockItem>
     {
         builder.ToTable("StockItems", t =>
         {
-            // Druga linia obrony nawet przy błedzie w aplikacji baza odrzuci stan ujemny.
+            // Druga linia obrony nawet przy błędzie w aplikacji baza odrzuci stan ujemny.
             t.HasCheckConstraint("CK_StockItems_Quantity_NonNegative", "\"Quantity\" >= 0");
         });
 
@@ -20,10 +20,10 @@ public class StockItemConfiguration : IEntityTypeConfiguration<StockItem>
 
         builder.Property(x => x.Quantity).HasPrecision(18, 3);
 
-        // Jedna para towar-lokalizacja może mieć tylko jeden rekord stanu.
+        // Jedna para towar — lokalizacja może mieć tylko jeden rekord stanu.
         builder.HasIndex(x => new { x.ProductId, x.LocationId }).IsUnique();
 
-        // Blokada optymistyczna - Npgsql mapuje właściwość uint na systemową kolumnę xmin.
+        // Blokada optymistyczna — Npgsql mapuje właściwość uint na systemową kolumnę xmin.
         builder.Property(x => x.RowVersion).IsRowVersion();
 
         builder.HasOne(x => x.Product)

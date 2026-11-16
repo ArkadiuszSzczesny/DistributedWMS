@@ -1,4 +1,5 @@
-﻿using DistributedWMS.Domain.Entities;
+﻿using DistributedWMS.Application.Common.Interfaces;
+using DistributedWMS.Domain.Entities;
 using DistributedWMS.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,13 +12,14 @@ namespace DistributedWMS.Infrastructure.Persistence;
 /// </summary>
 public static class DatabaseSeeder
 {
-    public static async Task SeedAsync(WmsDbContext db, CancellationToken ct = default)
+    public static async Task SeedAsync(
+        WmsDbContext db, IPasswordHasher hasher, CancellationToken ct = default)
     {
         if (await db.Locations.AnyAsync(ct))
             return;
 
         var locations = SeedLocations(db);
-        var users = SeedUsers(db, locations);
+        var users = SeedUsers(db, hasher, locations);
         var products = SeedProducts(db);
 
         await db.SaveChangesAsync(ct);
@@ -46,9 +48,11 @@ public static class DatabaseSeeder
     }
 
     private static (User Manager, User Operator, User Tech1, User Tech2) SeedUsers(
-        WmsDbContext db, (Location Main, Location Van1, Location Van2) locations)
+        WmsDbContext db,
+        IPasswordHasher hasher,
+        (Location Main, Location Van1, Location Van2) locations)
     {
-        var hash = BCrypt.Net.BCrypt.HashPassword("Haslo123!");
+        var hash = hasher.Hash("Haslo123!");
 
         var manager = new User("kierownik", "Anna Kowalska", hash, UserRole.Manager);
         var warehouseOperator = new User("magazynier", "Piotr Nowak", hash, UserRole.WarehouseOperator);
@@ -241,8 +245,7 @@ public static class DatabaseSeeder
     private static void Increase(WmsDbContext db, Guid productId, Guid locationId, decimal quantity)
     {
         var stock = db.StockItems.Local
-            .FirstOrDefault(s => s.ProductId == productId && s.LocationId == locationId)
-            ?? db.StockItems.FirstOrDefault(s => s.ProductId == productId && s.LocationId == locationId);
+            .FirstOrDefault(s => s.ProductId == productId && s.LocationId == locationId);
 
         if (stock is null)
         {
@@ -256,8 +259,7 @@ public static class DatabaseSeeder
     private static void Decrease(WmsDbContext db, Guid productId, Guid locationId, decimal quantity)
     {
         var stock = db.StockItems.Local
-            .FirstOrDefault(s => s.ProductId == productId && s.LocationId == locationId)
-            ?? db.StockItems.FirstOrDefault(s => s.ProductId == productId && s.LocationId == locationId);
+            .FirstOrDefault(s => s.ProductId == productId && s.LocationId == locationId);
 
         if (stock is null)
         {

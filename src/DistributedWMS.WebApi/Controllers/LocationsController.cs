@@ -15,7 +15,7 @@ public class LocationsController : ControllerBase
 
     public LocationsController(ILocationService locations) => _locations = locations;
 
-    ///<summary>Zwraca lokalizacje magazynowe: magazyn główny oraz magazyny mobilne.</summary>
+    /// <summary>Zwraca lokalizacje magazynowe: magazyn główny oraz magazyny mobilne.</summary>
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<LocationDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<LocationDto>>> GetAll(
@@ -28,9 +28,9 @@ public class LocationsController : ControllerBase
     public async Task<ActionResult<LocationDto>> GetById(Guid id, CancellationToken ct)
         => Ok(await _locations.GetByIdAsync(id, ct));
 
-    ///<summary>Tworzy nową lokalizację. Magazyn mobilny wymaga numeru rejestracyjnego.</summary>
-    [Authorize(Roles = "Manager")]
+    /// <summary>Tworzy nową lokalizację. Magazyn mobilny wymaga numeru rejestracyjnego.</summary>
     [HttpPost]
+    [Authorize(Roles = "Manager")]
     [ProducesResponseType(typeof(LocationDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<LocationDto>> Create(

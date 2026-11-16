@@ -4,10 +4,10 @@ using DistributedWMS.Domain.Exceptions;
 
 namespace DistributedWMS.Domain.Entities;
 
-///<summary>
-///Użytkownik systemu. Serwisant posiada przypisany magazyn mobilny,
-///co stanowi podstawę autoryzacji zasobowej przy rozliczeniu zużycia
-///</summary>
+/// <summary>
+/// Użytkownik systemu. Serwisant posiada przypisany magazyn mobilny,
+/// co stanowi podstawę autoryzacji zasobowej przy rozliczeniu zużycia.
+/// </summary>
 public class User : EntityBase
 {
     private User() { }
@@ -18,7 +18,7 @@ public class User : EntityBase
             throw new DomainException("Nazwa użytkownika nie może być pusta.");
        
         UserName = userName.Trim().ToLowerInvariant();
-        FullName = fullName.Trim();
+        SetFullName(fullName);
         PasswordHash = passwordHash;
         Role = role;
         IsActive = true;
@@ -32,7 +32,7 @@ public class User : EntityBase
 
     public UserRole Role { get; private set; }
 
-    ///<summary>Magazyn mobilny przypisany serwisantowi. Dla pozostałych ról pozostaje pusty.</summary>
+    /// <summary>Magazyn mobilny przypisany serwisantowi. Dla pozostałych ról pozostaje pusty.</summary>
     public Guid? AssignedLocationId { get; private set; }
 
     public Location? AssignedLocation { get; private set; }

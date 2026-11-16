@@ -91,7 +91,7 @@ public class UserService : IUserService
             if (request.AssignedLocationId is null)
             {
                 if (user.Role == UserRole.Technician)
-                    throw new DomainException("Serwisant musi mieć przypisany magazyn mobilny");
+                    throw new DomainException("Serwisant musi mieć przypisany magazyn mobilny.");
 
                 user.ClearAssignedLocation();
             }
@@ -169,7 +169,9 @@ public class UserService : IUserService
 
         var occupant = await _db.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.AssignedLocationId == locationId && u.Id != currentUserId, ct);
+            .FirstOrDefaultAsync(u => u.AssignedLocationId == locationId
+                                   && u.IsActive
+                                   && u.Id != currentUserId, ct);
 
         if (occupant is not null)
             throw new DomainException(

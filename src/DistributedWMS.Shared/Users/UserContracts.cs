@@ -10,13 +10,7 @@ public record UserDto(
 
 public record LoginRequest(string UserName, string Password);
 
-public record LoginResponse(
-    string Token,
-    Guid UserId,
-    string UserName,
-    string FullName,
-    string Role,
-    Guid? AssignedLocationId);
+public record LoginResponse(string Token, string FullName);
 
 public record CreateUserRequest(
     string UserName,

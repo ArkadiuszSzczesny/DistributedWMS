@@ -1,5 +1,4 @@
 ﻿using Microsoft.JSInterop;
-using System.Runtime.CompilerServices;
 
 namespace DistributedWMS.Client.Common;
 
@@ -30,5 +29,4 @@ public class LocalStorage
 
     public async Task RemoveAsync(string key)
         => await _js.InvokeVoidAsync("localStorage.removeItem", key);
-
 }

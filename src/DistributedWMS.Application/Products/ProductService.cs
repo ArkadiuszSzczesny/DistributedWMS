@@ -4,8 +4,6 @@ using DistributedWMS.Domain.Entities;
 using DistributedWMS.Domain.Exceptions;
 using DistributedWMS.Shared.Products;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
-using System.Runtime.CompilerServices;
 
 namespace DistributedWMS.Application.Products;
 
@@ -22,11 +20,10 @@ public class ProductService : IProductService
         if (onlyActive)
             query = query.Where(p => p.IsActive);
 
-
         return await query
             .OrderBy(p => p.Sku)
             .Select(p => new ProductDto(
-                p.Id, p.Sku, p.Name, p.Description, p.UnitOfMeasure, p.MinimumStock, p.IsActive))
+                p.Id, p.Sku, p.Name, p.Description, p.UnitOfMeasure, p.MinimumStock))
             .ToListAsync(ct);
     }
 
@@ -88,8 +85,5 @@ public class ProductService : IProductService
     }
 
     private static ProductDto Map(Product p) => new(
-        p.Id, p.Sku, p.Name, p.Description, p.UnitOfMeasure, p.MinimumStock, p.IsActive);
+        p.Id, p.Sku, p.Name, p.Description, p.UnitOfMeasure, p.MinimumStock);
 }
-
-
-  

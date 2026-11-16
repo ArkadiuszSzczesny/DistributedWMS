@@ -24,7 +24,7 @@ public class DocumentService : IDocumentService
         _currentUser = currentUser;
     }
 
-    //------ odczyt ------
+    // ------ odczyt ------
     public async Task<IReadOnlyList<DocumentListItemDto>> GetAllAsync(
         string? type = null, string? status = null, CancellationToken ct = default)
     {
@@ -208,17 +208,19 @@ public class DocumentService : IDocumentService
         var stock = await _db.StockItems
             .FirstOrDefaultAsync(s => s.ProductId == productId && s.LocationId == locationId, ct);
 
-        var product = await _db.Products.AsNoTracking().FirstAsync(p => p.Id == productId, ct);
-        var location = await _db.Locations.AsNoTracking().FirstAsync(l => l.Id == locationId, ct);
-
         if (stock is null)
         {
+            var missing = await _db.Products.AsNoTracking().FirstAsync(p => p.Id == productId, ct);
+            var place = await _db.Locations.AsNoTracking().FirstAsync(l => l.Id == locationId, ct);
+
             throw new DomainException(
-                $"Towar {product.Sku} nie występuje w lokalizacji {location.Code}. Rozchód jest niemożliwy.");
+                $"Towar {missing.Sku} nie występuje w lokalizacji {place.Code}. Rozchód jest niemożliwy.");
         }
 
         if (stock.Quantity < quantity)
         {
+            var product = await _db.Products.AsNoTracking().FirstAsync(p => p.Id == productId, ct);
+
             throw new DomainException(
                 $"Niewystarczający stan towaru {product.Sku} ({product.Name}). " +
                 $"Dostępne: {stock.Quantity:N3} {product.UnitOfMeasure}, " +
@@ -302,7 +304,6 @@ public class DocumentService : IDocumentService
                 "Serwisant może wystawiać dokumenty wyłącznie z przypisanego magazynu mobilnego.");
     }
 
-
     /// <summary>
     /// Buduje pełną reprezentację dokumentu. Dane pozycji pobierane są
     /// pojedynczym zapytaniem ze złączeniem kartoteki towarowej.
@@ -322,7 +323,6 @@ public class DocumentService : IDocumentService
                 d.PostedAtUtc,
                 d.SourceLocationId,
                 SourceCode = d.SourceLocation != null ? d.SourceLocation.Code : null,
-                d.TargetLocationId,
                 TargetCode = d.TargetLocation != null ? d.TargetLocation.Code : null,
                 UserName = d.CreatedByUser.FullName,
                 d.Reference,
@@ -356,7 +356,6 @@ public class DocumentService : IDocumentService
             header.PostedAtUtc,
             header.SourceLocationId,
             header.SourceCode,
-            header.TargetLocationId,
             header.TargetCode,
             header.UserName,
             header.Reference,

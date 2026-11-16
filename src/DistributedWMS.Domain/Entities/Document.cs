@@ -4,11 +4,11 @@ using DistributedWMS.Domain.Exceptions;
 
 namespace DistributedWMS.Domain.Entities;
 
-///<summary>
-///Dokument magazynowy stanowiący jedyne źródło zmian stanów magazynowych.
-///Dokument roboczy nie wpływa na stany; zaksięgowanie następuje w ramach
-///pojedynczej transakcji bazodanowej.
-///</summary>
+/// <summary>
+/// Dokument magazynowy stanowiący jedyne źródło zmian stanów magazynowych.
+/// Dokument roboczy nie wpływa na stany; zaksięgowanie następuje w ramach
+/// pojedynczej transakcji bazodanowej.
+/// </summary>
 public class Document : EntityBase
 {
     private readonly List<DocumentLine> _lines = new();
@@ -38,7 +38,7 @@ public class Document : EntityBase
         ValidateLocations();
     }
 
-    ///<summary>Numer dokumentu w formacie PZ/2026/0001.</summary>
+    /// <summary>Numer dokumentu w formacie PZ/2026/0001.</summary>
     public string Number { get; private set; } = null!;
 
     public DocumentType Type { get; private set; }
@@ -49,18 +49,18 @@ public class Document : EntityBase
 
     public DateTime? PostedAtUtc { get; private set; }
 
-    ///<summary>Lokalizacja źródłowa - rozchód. Pusta dla przyjęcia zewnętrznego.</summary>
+    /// <summary>Lokalizacja źródłowa - rozchód. Pusta dla przyjęcia zewnętrznego.</summary>
     public Guid? SourceLocationId { get; private set; }
     public Location? SourceLocation { get; private set; }
 
-    ///<summary>Lokalizacja docelowa - przychód. Pista dla rozchodu wewnętrznego.</summary>
+    /// <summary>Lokalizacja docelowa - przychód. Pista dla rozchodu wewnętrznego.</summary>
     public Guid? TargetLocationId { get; private set; }
     public Location? TargetLocation { get; private set; }
 
     public Guid CreatedByUserId { get; private set; }
     public User CreatedByUser { get; private set; } = null!;
 
-    ///<summary>Odnośnik zewnętrzny - numer faktury dostawcy lub numer zlecenia serwisowego.</summary>
+    /// <summary>Odnośnik zewnętrzny - numer faktury dostawcy lub numer zlecenia serwisowego.</summary>
     public string? Reference { get; set; }
 
     public string? Notes { get; set; }
@@ -93,10 +93,10 @@ public class Document : EntityBase
         _lines.Remove(line);
     }
 
-    ///<summary>
-    ///Oznacza dokument jako zaksięgowany. Wywoływane przez warstwę aplikacji
-    ///po pomyślnej aktualizacji stanów magazynowych w ramach  transakcji.
-    ///</summary>
+    /// <summary>
+    /// Oznacza dokument jako zaksięgowany. Wywoływane przez warstwę aplikacji
+    /// po pomyślnej aktualizacji stanów magazynowych w ramach  transakcji.
+    /// </summary>
     public void MarkAsPosted()
     {
         EnsureEditable();
@@ -109,15 +109,6 @@ public class Document : EntityBase
         ModifiedAtUtc = DateTime.UtcNow;
     }   
 
-    public void Cancel()
-    {
-        if (Status == DocumentStatus.Cancelled)
-            throw new DomainException("Dokument został już anulowany.");
-
-        Status = DocumentStatus.Cancelled;
-        ModifiedAtUtc = DateTime.UtcNow;
-    }
-
     private void EnsureEditable()
     {
         if (!IsEditable)
@@ -125,7 +116,7 @@ public class Document : EntityBase
                 $"Dokument {Number} ma status {Status} i nie może być modyfikowany.");
     }
 
-    ///<summary>Weryfikuje zgodność lokalizacji z typem dokumentu.</summary>
+    /// <summary>Weryfikuje zgodność lokalizacji z typem dokumentu.</summary>
     private void ValidateLocations()
     {
         switch (Type)
@@ -141,7 +132,7 @@ public class Document : EntityBase
                 if (SourceLocationId is null || TargetLocationId is null)
                     throw new DomainException("Przesunięcie wymaga lokalizacji źródłowej i docelowej.");
                 if (SourceLocationId == TargetLocationId)
-                    throw new DomainException("Lokalizacja źródłowa i docelowa muszą być różne");
+                    throw new DomainException("Lokalizacja źródłowa i docelowa muszą być różne.");
                 break;
 
             case DocumentType.InternalIssue:

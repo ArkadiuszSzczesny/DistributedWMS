@@ -31,8 +31,7 @@
                    ValueChanged="OnStatusChanged" Clearable="true" Variant="Variant.Outlined"
                    Dense="true" Style="max-width: 250px">
               <MudSelectItem T="string" Value="@("Draft")">Roboczy</MudSelectItem>
-              <MudSelectItem T="string" Value="@("Posted")">Zatwierdzony</MudSelectItem>
-              <MudSelectItem T="string" Value="@("Cancelled")">Anulowany</MudSelectItem> 
+              <MudSelectItem T="string" Value="@("Posted")">Zatwierdzony</MudSelectItem> 
         </MudSelect>
     </MudStack>
 </MudPaper>
@@ -129,7 +128,6 @@
     {
         "Draft" => Color.Warning,
         "Posted" => Color.Success,
-        "Cancelled" => Color.Error,
         _ => Color.Default
     };
 

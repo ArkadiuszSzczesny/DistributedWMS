@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace DistributedWMS.Infrastructure.Persistence.Configurations;
 
 public class ProductConfiguration : IEntityTypeConfiguration<Product>
-{ 
+{
     public void Configure(EntityTypeBuilder<Product> builder)
     {
         builder.ToTable("Products");

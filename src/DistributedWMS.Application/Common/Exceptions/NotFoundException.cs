@@ -7,7 +7,5 @@
 public class NotFoundException : Exception
 {
     public NotFoundException(string entityName, object key)
-      : base($"Nie odnaleziono obiektu {entityName} o identyfikatorze {key}.") { }
-
-    public NotFoundException(string message) : base(message) { }
+        : base($"Nie odnaleziono obiektu {entityName} o identyfikatorze {key}.") { }
 }

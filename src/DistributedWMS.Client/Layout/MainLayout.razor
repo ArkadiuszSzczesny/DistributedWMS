@@ -57,7 +57,7 @@
     </MudDrawer>
 
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-6">
+        <MudContainer MaxWidth="MaxWidth.Large" Class="my-6">
             @Body
         </MudContainer>
     </MudMainContent>
@@ -76,7 +76,6 @@
         if (user.IsInRole("WarehouseOperator")) return "Magazynier";
         if (user.IsInRole("Technician")) return "Serwisant";
         return string.Empty;
-
     }
 
     private static string FullName(System.Security.Claims.ClaimsPrincipal user)

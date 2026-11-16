@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DistributedWMS.Infrastructure.Persistence;
 
-///<summary>
-///Kontekst bazy danych systemu. Konfiguracje poszczególnych encji
-///znajdują się w osobnych klasach w folderze Configurations.
+/// <summary>
+/// Kontekst bazy danych systemu. Konfiguracje poszczególnych encji
+/// znajdują się w osobnych klasach w folderze Configurations.
 /// </summary>
 public class WmsDbContext : DbContext, IWmsDbContext
 {
