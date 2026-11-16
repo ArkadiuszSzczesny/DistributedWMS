@@ -32,7 +32,7 @@ Ochrona poprawności stanów magazynowych realizowana jest na czterech niezależ
 
 ## Struktura repozytorium
 
-...
+```
 
 DistributedWMS/
 |── docker-compose.yml
@@ -45,7 +45,7 @@ DistributedWMS/
 |	└── DistributedWMS.Client/			aplikacja Blazor WebAssembly
 |── tests/
 	└── DistributedWMS.Tests/			testy jednostkowe
-...
+```
 
 ## Uruchomienie
 
@@ -53,9 +53,9 @@ Wymagania: .NET 10 SDK, Docker Desktop, Visual Studio.
 
 1. Uruchom bazę danych:
 
-	...
+	```
 	docker compose up -d
-	...
+	```
 
 2. Otwórz 'DistributedWMS.sln' w Visual Studio.
 
